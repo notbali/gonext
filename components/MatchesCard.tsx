@@ -1,6 +1,7 @@
 import type { Match, Teammate } from "@/lib/types";
 import { countdownLabel, matchDateLine } from "@/lib/dates";
-import { getConfirmedTeammates } from "@/lib/mock-data";
+import { getConfirmedTeammates } from "@/lib/matches";
+import { Avatar } from "@/components/Avatar";
 
 function MatchItem({
   match,
@@ -19,17 +20,16 @@ function MatchItem({
 
   return (
     <div className="border-t border-border py-4 first:border-t-0">
-      <div className="flex items-center justify-between">
-        <p className="text-body-lg font-semibold text-text-primary">vs {match.opponent}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-body-lg font-semibold text-text-primary">{matchDateLine(match)}</p>
         <span
-          className={`rounded-full px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider ${
+          className={`shrink-0 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider ${
             isThisWeek ? "bg-brand-dim text-brand-bright" : "border border-border text-text-dim"
           }`}
         >
           {countdown}
         </span>
       </div>
-      <p className="mt-1 font-mono text-caption text-text-muted">{matchDateLine(match)}</p>
 
       {isThisWeek ? (
         <div className="mt-3 flex items-center gap-2">
@@ -38,13 +38,11 @@ function MatchItem({
             return (
               <div
                 key={t.id}
-                className={`flex h-6 w-6 items-center justify-center rounded-full border font-mono text-[10px] font-bold ${
-                  isConfirmed
-                    ? "border-primary/40 bg-primary-dim text-primary-bright"
-                    : "border-border text-text-dim"
+                className={`rounded-full ring-2 ${
+                  isConfirmed ? "ring-primary/60" : "ring-transparent grayscale opacity-50"
                 }`}
               >
-                {t.initials}
+                <Avatar name={t.name} src={t.avatarUrl} size={22} />
               </div>
             );
           })}

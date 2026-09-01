@@ -58,6 +58,15 @@ export function matchDateLine(match: { date: Date; group: string }): string {
   return `${day} ${month} ${d.getDate()} · ${hours12}:${minutes} ${meridiem} ET · ${match.group}`;
 }
 
+/** Compact time for tight UI, e.g. "7P" or "7:30P". */
+export function shortTimeLabel(date: Date): string {
+  const hours24 = date.getHours();
+  const hours12 = ((hours24 + 11) % 12) + 1;
+  const meridiem = hours24 < 12 ? "A" : "P";
+  const minutes = date.getMinutes();
+  return minutes === 0 ? `${hours12}${meridiem}` : `${hours12}:${minutes.toString().padStart(2, "0")}${meridiem}`;
+}
+
 /** "TODAY" / "TOMORROW" / "IN N DAYS" within the displayed week, else "NEXT WEEK". */
 export function countdownLabel(matchDate: Date, today: Date, weekDates: Date[]): string {
   const diffDays = Math.round(

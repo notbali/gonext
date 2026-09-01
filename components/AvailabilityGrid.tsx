@@ -1,5 +1,7 @@
 import type { DayAvailability, Match, Teammate } from "@/lib/types";
-import { dayOfWeekLabel, isSameDate } from "@/lib/dates";
+import { dayOfWeekLabel, isSameDate, shortTimeLabel } from "@/lib/dates";
+import { EditableCell } from "@/components/EditableCell";
+import { Avatar } from "@/components/Avatar";
 
 const CELL_STYLES: Record<DayAvailability["status"], string> = {
   available: "border-primary/30 bg-primary-dim text-primary-bright",
@@ -25,10 +27,12 @@ export function AvailabilityGrid({
   weekDates,
   teammates,
   matches,
+  myTeammateId,
 }: {
   weekDates: Date[];
   teammates: Teammate[];
   matches: Match[];
+  myTeammateId?: string | null;
 }) {
   const matchByDay = weekDates.map((date) => matches.find((m) => isSameDate(m.date, date)));
 
@@ -55,7 +59,7 @@ export function AvailabilityGrid({
               <span className="text-body-lg font-bold text-text-primary">{date.getDate()}</span>
               {match && (
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-brand-bright">
-                  Match 7p
+                  Match {shortTimeLabel(match.date)}
                 </span>
               )}
             </div>
@@ -69,30 +73,38 @@ export function AvailabilityGrid({
           className="grid grid-cols-[188px_repeat(7,1fr)] border-b border-border last:border-b-0"
         >
           <div className="flex items-center gap-3 px-4 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-raised">
-              <span className="font-mono text-[10px] font-bold text-text-primary">
-                {teammate.initials}
-              </span>
-            </div>
+            <Avatar name={teammate.name} src={teammate.avatarUrl} size={32} />
             <span className="text-body font-medium text-text-primary">{teammate.name}</span>
           </div>
 
           {teammate.week.map((day, i) => {
             const isMatchDay = Boolean(matchByDay[i]);
+            const isMine = teammate.id === myTeammateId;
             return (
               <div
                 key={i}
                 className={`flex items-center justify-center border-l border-border p-2.5`}
               >
-                <div
-                  className={`flex h-full w-full items-center justify-center rounded-md border ${CELL_STYLES[day.status]} ${
-                    isMatchDay ? "ring-2 ring-brand/50" : ""
-                  }`}
-                >
-                  <span className="font-mono text-caption font-semibold tracking-wide">
-                    {cellLabel(day)}
-                  </span>
-                </div>
+                {isMine ? (
+                  <div className={`h-full w-full ${isMatchDay ? "ring-2 ring-brand/50 rounded-md" : ""}`}>
+                    <EditableCell
+                      teammateId={teammate.id}
+                      dateISO={weekDates[i].toISOString()}
+                      status={day.status}
+                      timeRange={day.timeRange}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={`flex h-full w-full items-center justify-center rounded-md border ${CELL_STYLES[day.status]} ${
+                      isMatchDay ? "ring-2 ring-brand/50" : ""
+                    }`}
+                  >
+                    <span className="font-mono text-caption font-semibold tracking-wide">
+                      {cellLabel(day)}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}

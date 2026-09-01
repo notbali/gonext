@@ -9,14 +9,13 @@ export interface DayAvailability {
 export interface Teammate {
   id: string;
   name: string;
-  initials: string;
+  avatarUrl: string | null;
   /** One entry per day of the displayed week, Monday first. */
   week: DayAvailability[];
 }
 
 export interface Match {
   id: string;
-  opponent: string;
   date: Date;
   group: string;
   /** False once the match falls outside the displayed week, where no availability has been modeled yet. */

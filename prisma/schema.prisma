@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth.js models (schema shape required by @auth/prisma-adapter) ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  teammate      Teammate?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Domain models ---
+
+model Team {
+  id          String     @id @default(cuid())
+  name        String
+  division    String
+  // Shareable join link token. Regenerating it invalidates the old link.
+  inviteToken String     @unique @default(cuid())
+  teammates   Teammate[]
+  matches     Match[]
+}
+
+model Teammate {
+  id      String  @id @default(cuid())
+  order   Int     @default(0)
+  isCoach Boolean @default(false)
+  active  Boolean @default(true)
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  // A Teammate only ever exists because a Discord account joined via the invite link —
+  // there's no placeholder/unclaimed state. Name and avatar come from the linked User.
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  availability Availability[]
+}
+
+model Match {
+  id    String   @id @default(cuid())
+  date  DateTime
+  group String
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+}
+
+model Availability {
+  id     String   @id @default(cuid())
+  date   DateTime
+  status String
+  timeRange String?
+
+  teammateId String
+  teammate   Teammate @relation(fields: [teammateId], references: [id])
+
+  @@unique([teammateId, date])
+}
