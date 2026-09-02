@@ -6,10 +6,23 @@ import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData } from "@/lib/schedule-data";
+import { addWeeks } from "@/lib/dates";
 
-export default async function SchedulePage() {
+function parseWeekOffset(raw: string | undefined): number {
+  const n = Number(raw);
+  return Number.isInteger(n) ? n : 0;
+}
+
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ week?: string }>;
+}) {
+  const { week } = await searchParams;
+  const weekOffset = parseWeekOffset(week);
   const today = new Date();
-  const [session, schedule] = await Promise.all([auth(), getScheduleData(today)]);
+  const weekReference = addWeeks(today, weekOffset);
+  const [session, schedule] = await Promise.all([auth(), getScheduleData(weekReference, today)]);
 
   if (!schedule) {
     return (
@@ -42,7 +55,7 @@ export default async function SchedulePage() {
   return (
     <div className="min-h-screen bg-bg">
       {nav}
-      <PageHeader weekDates={schedule.weekDates} />
+      <PageHeader weekDates={schedule.weekDates} weekOffset={weekOffset} />
       <div className="flex gap-6 px-8 py-6">
         <AvailabilityGrid
           weekDates={schedule.weekDates}

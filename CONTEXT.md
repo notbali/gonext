@@ -33,4 +33,4 @@ A Teammate counts as confirmed for a Match when their Availability on the Match'
 _Avoid_: RSVP'd, accepted
 
 **This week**:
-The real calendar week (Monday–Sunday) containing today's date. The schedule grid always shows the current real week — there is no navigating to other weeks in this pass.
+The real calendar week (Monday–Sunday) containing today's date. The schedule grid defaults to this week but a Teammate can navigate to past/future weeks; "This week" always jumps back to it.

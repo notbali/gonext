@@ -28,6 +28,13 @@ export function getWeekDates(today: Date): Date[] {
   });
 }
 
+/** `date` shifted by `weeks` whole weeks (negative for earlier weeks). */
+export function addWeeks(date: Date, weeks: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + weeks * 7);
+  return d;
+}
+
 export function isSameDate(a: Date, b: Date): boolean {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }

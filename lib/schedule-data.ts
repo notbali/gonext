@@ -10,8 +10,12 @@ export interface ScheduleData {
   matches: Match[];
 }
 
-/** Loads the (single, for now) team's schedule for the real current calendar week. */
-export async function getScheduleData(today: Date): Promise<ScheduleData | null> {
+/**
+ * Loads the (single, for now) team's schedule for the calendar week containing
+ * `weekReference`. `today` is the real current date, used to decide which
+ * matches count as "upcoming" regardless of which week is being viewed.
+ */
+export async function getScheduleData(weekReference: Date, today: Date): Promise<ScheduleData | null> {
   const team = await db.team.findFirst({
     include: {
       teammates: {
@@ -25,7 +29,7 @@ export async function getScheduleData(today: Date): Promise<ScheduleData | null>
 
   if (!team) return null;
 
-  const weekDates = getWeekDates(today);
+  const weekDates = getWeekDates(weekReference);
 
   const teammates: Teammate[] = team.teammates.map((t) => ({
     id: t.id,
