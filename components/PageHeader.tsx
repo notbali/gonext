@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { weekRangeLabel } from "@/lib/dates";
+import { dateRangeLabel } from "@/lib/dates";
 
 export function PageHeader({
   weekDates,
   weekOffset,
+  weekCount,
 }: {
   weekDates: Date[];
   weekOffset: number;
+  weekCount: number;
 }) {
-  const isCurrentWeek = weekOffset === 0;
+  const isCurrentRange = weekOffset === 0;
 
   return (
     <div className="flex items-end justify-between border-b border-border bg-bg px-8 py-6">
@@ -17,20 +19,20 @@ export function PageHeader({
           Team Availability
         </p>
         <h1 className="mt-1 text-display font-bold tracking-tight text-text-primary">
-          {weekRangeLabel(weekDates)}
+          {dateRangeLabel(weekDates)}
         </h1>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1 rounded-md border border-border bg-surface px-1 py-1 text-text-dim">
           <Link
-            href={`/?week=${weekOffset - 1}`}
-            aria-label="Previous week"
+            href={`/?week=${weekOffset - weekCount}`}
+            aria-label={`Previous ${weekCount} weeks`}
             className="rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
           >
             ‹
           </Link>
-          {isCurrentWeek ? (
+          {isCurrentRange ? (
             <span className="px-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted">
               This week
             </span>
@@ -43,8 +45,8 @@ export function PageHeader({
             </Link>
           )}
           <Link
-            href={`/?week=${weekOffset + 1}`}
-            aria-label="Next week"
+            href={`/?week=${weekOffset + weekCount}`}
+            aria-label={`Next ${weekCount} weeks`}
             className="rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
           >
             ›

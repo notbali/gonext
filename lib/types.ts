@@ -10,7 +10,7 @@ export interface Teammate {
   id: string;
   name: string;
   avatarUrl: string | null;
-  /** One entry per day of the displayed week, Monday first. */
+  /** One entry per day of the displayed date range, chronological (Monday-first per week). */
   week: DayAvailability[];
 }
 
