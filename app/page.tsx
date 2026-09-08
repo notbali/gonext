@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
-import { getScheduleData } from "@/lib/schedule-data";
+import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { addWeeks } from "@/lib/dates";
 
 function parseWeekOffset(raw: string | undefined): number {
@@ -55,7 +55,7 @@ export default async function SchedulePage({
   return (
     <div className="min-h-screen bg-bg">
       {nav}
-      <PageHeader weekDates={schedule.weekDates} weekOffset={weekOffset} />
+      <PageHeader weekDates={schedule.weekDates} weekOffset={weekOffset} weekCount={WEEKS_AHEAD} />
       <div className="flex gap-6 px-8 py-6">
         <AvailabilityGrid
           weekDates={schedule.weekDates}

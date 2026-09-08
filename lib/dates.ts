@@ -35,6 +35,28 @@ export function addWeeks(date: Date, weeks: number): Date {
   return d;
 }
 
+/**
+ * Flat, chronological list of dates spanning `weekCount` consecutive calendar
+ * weeks (Monday-Sunday each), starting with the week containing `weekReference`.
+ */
+export function getLookaheadDates(weekReference: Date, weekCount: number): Date[] {
+  const start = getWeekStart(weekReference);
+  return Array.from({ length: weekCount * 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+/** Splits a flat per-day array back into consecutive 7-day (Monday-first) chunks. */
+export function chunkIntoWeeks<T>(days: T[]): T[][] {
+  const weeks: T[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+  return weeks;
+}
+
 export function isSameDate(a: Date, b: Date): boolean {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
@@ -44,14 +66,19 @@ export function dayOfWeekLabel(date: Date): string {
 }
 
 export function weekRangeLabel(weekDates: Date[]): string {
-  const start = weekDates[0];
-  const end = weekDates[6];
+  return `Week of ${dateRangeLabel(weekDates)}`;
+}
+
+/** Formats the first and last of `dates` as a span, e.g. "SEP 8 — 14" or "SEP 28 — OCT 11". */
+export function dateRangeLabel(dates: Date[]): string {
+  const start = dates[0];
+  const end = dates[dates.length - 1];
   const startLabel = `${MONTH_LABELS[start.getMonth()]} ${start.getDate()}`;
   const endLabel =
     start.getMonth() === end.getMonth()
       ? `${end.getDate()}`
       : `${MONTH_LABELS[end.getMonth()]} ${end.getDate()}`;
-  return `Week of ${startLabel} — ${endLabel}`;
+  return `${startLabel} — ${endLabel}`;
 }
 
 export function matchDateLine(match: { date: Date; group: string }): string {

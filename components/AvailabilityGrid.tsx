@@ -1,5 +1,5 @@
 import type { DayAvailability, Match, Teammate } from "@/lib/types";
-import { dayOfWeekLabel, isSameDate, shortTimeLabel } from "@/lib/dates";
+import { chunkIntoWeeks, dayOfWeekLabel, isSameDate, shortTimeLabel, weekRangeLabel } from "@/lib/dates";
 import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
 
@@ -23,25 +23,30 @@ function cellLabel(day: DayAvailability): string {
   }
 }
 
-export function AvailabilityGrid({
+/** One Monday-Sunday section of the grid. `dayOffset` is this week's start index into each teammate's flat `week` array. */
+function WeekSection({
   weekDates,
+  dayOffset,
   teammates,
   matches,
   myTeammateId,
+  isFirst,
 }: {
   weekDates: Date[];
+  dayOffset: number;
   teammates: Teammate[];
   matches: Match[];
   myTeammateId?: string | null;
+  isFirst: boolean;
 }) {
   const matchByDay = weekDates.map((date) => matches.find((m) => isSameDate(m.date, date)));
 
   return (
-    <div className="flex-1 overflow-hidden rounded-lg border border-border bg-surface">
+    <div className={isFirst ? "" : "border-t-4 border-bg"}>
       <div className="grid grid-cols-[188px_repeat(7,1fr)] border-b border-border">
         <div className="flex items-center px-4 py-4">
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
-            Teammate
+            {isFirst ? "Teammate" : weekRangeLabel(weekDates)}
           </span>
         </div>
         {weekDates.map((date, i) => {
@@ -77,7 +82,8 @@ export function AvailabilityGrid({
             <span className="text-body font-medium text-text-primary">{teammate.name}</span>
           </div>
 
-          {teammate.week.map((day, i) => {
+          {weekDates.map((date, i) => {
+            const day = teammate.week[dayOffset + i];
             const isMatchDay = Boolean(matchByDay[i]);
             const isMine = teammate.id === myTeammateId;
             return (
@@ -89,7 +95,7 @@ export function AvailabilityGrid({
                   <div className={`h-full w-full ${isMatchDay ? "ring-2 ring-brand/50 rounded-md" : ""}`}>
                     <EditableCell
                       teammateId={teammate.id}
-                      dateISO={weekDates[i].toISOString()}
+                      dateISO={date.toISOString()}
                       status={day.status}
                       timeRange={day.timeRange}
                     />
@@ -109,6 +115,36 @@ export function AvailabilityGrid({
             );
           })}
         </div>
+      ))}
+    </div>
+  );
+}
+
+export function AvailabilityGrid({
+  weekDates,
+  teammates,
+  matches,
+  myTeammateId,
+}: {
+  weekDates: Date[];
+  teammates: Teammate[];
+  matches: Match[];
+  myTeammateId?: string | null;
+}) {
+  const weeks = chunkIntoWeeks(weekDates);
+
+  return (
+    <div className="flex-1 overflow-hidden rounded-lg border border-border bg-surface">
+      {weeks.map((week, weekIndex) => (
+        <WeekSection
+          key={week[0].toISOString()}
+          weekDates={week}
+          dayOffset={weekIndex * 7}
+          teammates={teammates}
+          matches={matches}
+          myTeammateId={myTeammateId}
+          isFirst={weekIndex === 0}
+        />
       ))}
     </div>
   );

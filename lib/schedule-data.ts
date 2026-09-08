@@ -1,6 +1,10 @@
-import { db } from "@/lib/db";
-import { getWeekDates, isSameDate } from "@/lib/dates";
+import { db as defaultDb } from "@/lib/db";
+import { getLookaheadDates, isSameDate } from "@/lib/dates";
+import type { PrismaClient } from "@/lib/generated/prisma/client";
 import type { AvailabilityStatus, DayAvailability, Match, Teammate } from "@/lib/types";
+
+/** How many calendar weeks ahead the schedule view shows by default. */
+export const WEEKS_AHEAD = 4;
 
 export interface ScheduleData {
   teamName: string;
@@ -11,11 +15,17 @@ export interface ScheduleData {
 }
 
 /**
- * Loads the (single, for now) team's schedule for the calendar week containing
- * `weekReference`. `today` is the real current date, used to decide which
- * matches count as "upcoming" regardless of which week is being viewed.
+ * Loads the (single, for now) team's schedule for the `weekCount` calendar
+ * weeks starting with the week containing `weekReference`. `today` is the
+ * real current date, used to decide which matches count as "upcoming"
+ * regardless of which week is being viewed.
  */
-export async function getScheduleData(weekReference: Date, today: Date): Promise<ScheduleData | null> {
+export async function getScheduleData(
+  weekReference: Date,
+  today: Date,
+  db: PrismaClient = defaultDb,
+  weekCount: number = WEEKS_AHEAD,
+): Promise<ScheduleData | null> {
   const team = await db.team.findFirst({
     include: {
       teammates: {
@@ -29,7 +39,7 @@ export async function getScheduleData(weekReference: Date, today: Date): Promise
 
   if (!team) return null;
 
-  const weekDates = getWeekDates(weekReference);
+  const weekDates = getLookaheadDates(weekReference, weekCount);
 
   const teammates: Teammate[] = team.teammates.map((t) => ({
     id: t.id,
