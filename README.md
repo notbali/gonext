@@ -15,6 +15,17 @@ npm run dev
 
 See [CONTEXT.md](./CONTEXT.md) for the domain glossary.
 
+## Testing
+
+Tests that touch the database run against a real local Postgres (via Docker), not a mock —
+some of them (like the join-race test) only mean anything against real transaction behavior.
+
+```bash
+npm run test:db:up   # starts a throwaway Postgres on localhost:55432
+npm test             # pushes the schema to it and runs the suite
+npm run test:db:down # tear it down when you're done
+```
+
 ## Discord login setup
 
 Login uses Discord OAuth via Auth.js. `AUTH_SECRET` is already generated for you in

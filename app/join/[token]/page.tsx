@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { signInWithDiscord } from "@/app/actions";
+import { joinTeamByInviteToken } from "@/lib/join-team";
 
 export default async function JoinPage({
   params,
@@ -51,21 +52,7 @@ export default async function JoinPage({
     );
   }
 
-  const existing = await db.teammate.findUnique({ where: { userId: session.user.id } });
-  if (existing) {
-    redirect("/");
-  }
-
-  const teammateCount = await db.teammate.count({ where: { teamId: team.id } });
-
-  await db.teammate.create({
-    data: {
-      teamId: team.id,
-      userId: session.user.id,
-      order: teammateCount,
-      isCoach: teammateCount === 0, // the first person to join a team becomes its coach
-    },
-  });
+  await joinTeamByInviteToken(token, session.user.id);
 
   redirect("/");
 }
