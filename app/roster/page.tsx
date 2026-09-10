@@ -4,7 +4,12 @@ import { TopNav } from "@/components/TopNav";
 import { AccessGate } from "@/components/AccessGate";
 import { Avatar } from "@/components/Avatar";
 import { InviteLinkCard } from "@/components/InviteLinkCard";
-import { deactivateTeammate, reactivateTeammate } from "@/app/roster/actions";
+import {
+  claimCoachRole,
+  deactivateTeammate,
+  promoteTeammate,
+  reactivateTeammate,
+} from "@/app/roster/actions";
 
 export default async function RosterPage() {
   const session = await auth();
@@ -26,6 +31,8 @@ export default async function RosterPage() {
   const isCoach = session?.isCoach ?? false;
   const active = team.teammates.filter((t) => t.active);
   const inactive = team.teammates.filter((t) => !t.active);
+  const hasActiveCoach = active.some((t) => t.isCoach);
+  const currentTeammate = active.find((t) => t.id === session?.teammateId);
 
   const nav = (
     <TopNav
@@ -56,6 +63,23 @@ export default async function RosterPage() {
         </p>
         <h1 className="mt-1 text-title font-bold text-text-primary">{team.name}</h1>
 
+        {!hasActiveCoach && currentTeammate && (
+          <div className="mt-6 flex items-center justify-between gap-4 rounded-lg border border-brand-dim bg-brand-dim/20 p-4">
+            <p className="text-body text-text-primary">
+              This team has no active Coach, so nobody can manage the roster. Any teammate can
+              claim the role to fix this.
+            </p>
+            <form action={claimCoachRole}>
+              <button
+                type="submit"
+                className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wide text-brand-bright hover:text-brand"
+              >
+                Become Coach
+              </button>
+            </form>
+          </div>
+        )}
+
         {active.length === 0 ? (
           <p className="mt-6 text-body text-text-muted">
             Nobody has joined yet — share the invite link below.
@@ -79,14 +103,24 @@ export default async function RosterPage() {
                   </p>
                 </div>
                 {isCoach && !t.isCoach && (
-                  <form action={deactivateTeammate.bind(null, t.id)}>
-                    <button
-                      type="submit"
-                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80"
-                    >
-                      Remove
-                    </button>
-                  </form>
+                  <div className="flex items-center gap-4">
+                    <form action={promoteTeammate.bind(null, t.id)}>
+                      <button
+                        type="submit"
+                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-bright"
+                      >
+                        Make Coach
+                      </button>
+                    </form>
+                    <form action={deactivateTeammate.bind(null, t.id)}>
+                      <button
+                        type="submit"
+                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80"
+                      >
+                        Remove
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
             ))}
