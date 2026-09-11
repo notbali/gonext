@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkIntoWeeks, dateRangeLabel, getLookaheadDates } from "./dates";
+import { chunkIntoWeeks, dateRangeLabel, getLookaheadDates, minutesUntil } from "./dates";
 
 describe("getLookaheadDates", () => {
   it("returns weekCount * 7 consecutive dates starting on the Monday of the reference week", () => {
@@ -43,6 +43,22 @@ describe("chunkIntoWeeks", () => {
 
   it("returns an empty array for an empty input", () => {
     expect(chunkIntoWeeks([])).toEqual([]);
+  });
+});
+
+describe("minutesUntil", () => {
+  const now = new Date(2026, 8, 8, 18, 0, 0);
+
+  it("returns whole minutes remaining until a future date", () => {
+    expect(minutesUntil(new Date(2026, 8, 8, 18, 45, 0), now)).toBe(45);
+  });
+
+  it("returns 0 for the exact same instant", () => {
+    expect(minutesUntil(now, now)).toBe(0);
+  });
+
+  it("returns a negative number for a date already in the past", () => {
+    expect(minutesUntil(new Date(2026, 8, 8, 17, 0, 0), now)).toBe(-60);
   });
 });
 

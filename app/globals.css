@@ -166,3 +166,38 @@ body {
     transform: translateY(100%);
   }
 }
+
+/* Matches list: the only idle loop in the system, because it's the only thing genuinely counting down. */
+.urgency-breathe {
+  animation: gonext-breathe 3s var(--e-inout) infinite;
+}
+@keyframes gonext-breathe {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Next-match card: a left accent bar wipes in once the card has landed. */
+.accent-wipe::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+[data-revealed] .accent-wipe::before {
+  animation: gonext-wipe 400ms var(--e-out) 320ms forwards;
+}
+@keyframes gonext-wipe {
+  to {
+    transform: scaleY(1);
+  }
+}
