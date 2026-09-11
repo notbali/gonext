@@ -31,4 +31,26 @@ describe("NavTabs", () => {
     render(<NavTabs />);
     expect(screen.getByRole("link", { name: /roster/i })).toHaveAttribute("aria-current", "page");
   });
+
+  it("renders exactly one underline marker, inside the active link", () => {
+    mockPathname.mockReturnValue("/matches");
+    render(<NavTabs />);
+    const markers = screen.getAllByTestId("nav-underline");
+    expect(markers).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /matches/i })).toContainElement(markers[0]);
+  });
+
+  it("moves the underline marker to the newly active link on rerender", () => {
+    mockPathname.mockReturnValue("/");
+    const { rerender } = render(<NavTabs />);
+    expect(screen.getByRole("link", { name: /schedule/i })).toContainElement(
+      screen.getByTestId("nav-underline"),
+    );
+
+    mockPathname.mockReturnValue("/roster");
+    rerender(<NavTabs />);
+    expect(screen.getByRole("link", { name: /roster/i })).toContainElement(
+      screen.getByTestId("nav-underline"),
+    );
+  });
 });

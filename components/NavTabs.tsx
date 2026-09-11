@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import { EASE } from "@/lib/motion";
 
 const NAV_ITEMS = [
   { key: "schedule", label: "SCHEDULE", href: "/" },
@@ -26,11 +28,19 @@ export function NavTabs() {
           key={item.key}
           href={item.href}
           aria-current={item.key === active ? "page" : undefined}
-          className={`font-mono text-caption font-semibold tracking-wider transition-colors duration-[var(--d-micro)] ${
+          className={`relative pb-1 font-mono text-caption font-semibold tracking-wider transition-colors duration-[var(--d-micro)] ${
             item.key === active ? "text-text-primary" : "text-text-dim hover:text-text-muted"
           }`}
         >
           {item.label}
+          {item.key === active && (
+            <motion.span
+              layoutId="nav-underline"
+              data-testid="nav-underline"
+              className="absolute inset-x-0 -bottom-1 h-[2px] bg-brand"
+              transition={{ duration: 0.24, ease: EASE.snap }}
+            />
+          )}
         </Link>
       ))}
     </nav>
