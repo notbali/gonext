@@ -26,8 +26,8 @@ export const rise = {
 /** Route/panel transition: chrome holds still, only the panel moves. */
 export const panel = {
   initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0, transition: { duration: D.state, ease: EASE.out } },
-  exit: { opacity: 0, y: -6, transition: { duration: 0.14, ease: EASE.snap } },
+  animate: { opacity: 1, y: 0, transition: { duration: D.ui, ease: EASE.out } },
+  exit: { opacity: 0, y: -6, transition: { duration: D.micro, ease: EASE.snap } },
 };
 
 /** Toast enter/exit: shears in from the right, resolves square. */
