@@ -66,6 +66,30 @@ describe("deactivateTeammate", () => {
     const updated = await testDb.teammate.findUnique({ where: { id: bob.id } });
     expect(updated?.active).toBe(false);
   });
+
+  it("throws when the target teammate is a coach", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice", { isCoach: true });
+
+    await expect(deactivateTeammate(alice.id)).rejects.toThrow(
+      "Coaches cannot be removed. Promote another teammate first.",
+    );
+    const unchanged = await testDb.teammate.findUnique({ where: { id: alice.id } });
+    expect(unchanged?.active).toBe(true);
+  });
+
+  it("throws when a coach tries to deactivate themselves", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice", { isCoach: true });
+    auth.mockResolvedValue({ isCoach: true, teammateId: alice.id });
+
+    await expect(deactivateTeammate(alice.id)).rejects.toThrow(
+      "Coaches cannot be removed. Promote another teammate first.",
+    );
+    const unchanged = await testDb.teammate.findUnique({ where: { id: alice.id } });
+    expect(unchanged?.active).toBe(true);
+  });
 });
 
 describe("reactivateTeammate", () => {

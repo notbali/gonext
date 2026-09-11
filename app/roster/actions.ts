@@ -13,6 +13,9 @@ async function requireCoach() {
 
 export async function deactivateTeammate(teammateId: string) {
   await requireCoach();
+  const teammate = await db.teammate.findUnique({ where: { id: teammateId } });
+  if (teammate?.isCoach) throw new Error("Coaches cannot be removed. Promote another teammate first.");
+
   await db.teammate.update({ where: { id: teammateId }, data: { active: false } });
   revalidatePath("/roster");
   revalidatePath("/");
