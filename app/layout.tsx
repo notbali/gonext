@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { TopNav } from "@/components/TopNav";
 import { RouteTransition } from "@/components/RouteTransition";
 import { ToastProvider } from "@/components/ToastProvider";
+import { AmbientGrain } from "@/components/AmbientGrain";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-full font-sans antialiased">
+        <AmbientGrain />
         <ToastProvider>
           {team && (
             <TopNav
