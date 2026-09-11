@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
 import { AccessGate } from "@/components/AccessGate";
 import { Avatar } from "@/components/Avatar";
 import { InviteLinkCard } from "@/components/InviteLinkCard";
@@ -34,29 +33,12 @@ export default async function RosterPage() {
   const hasActiveCoach = active.some((t) => t.isCoach);
   const currentTeammate = active.find((t) => t.id === session?.teammateId);
 
-  const nav = (
-    <TopNav
-      active="roster"
-      teamDivision={team.division}
-      isSignedIn={Boolean(session?.user)}
-      userName={session?.user?.name}
-      userImage={session?.user?.image}
-    />
-  );
-
   if (!session?.teammateId) {
-    return (
-      <div className="min-h-screen bg-bg">
-        {nav}
-        <AccessGate isSignedIn={Boolean(session?.user)} />
-      </div>
-    );
+    return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
   return (
     <div className="min-h-screen bg-bg">
-      {nav}
-
       <div className="mx-auto max-w-3xl px-8 py-8">
         <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
           Roster

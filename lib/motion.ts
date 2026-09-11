@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /** Durations in seconds, for framer-motion transitions. Mirrors the CSS custom properties in app/globals.css. */
 export const D = { micro: 0.12, ui: 0.24, state: 0.48 } as const;
@@ -44,19 +44,27 @@ export const chip = {
   exit: { opacity: 0, width: 0, transition: { duration: 0.2 } },
 };
 
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+function subscribeToReducedMotion(onChange: () => void) {
+  const mql = window.matchMedia(REDUCED_MOTION_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+
+function getReducedMotionSnapshot() {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+function getReducedMotionServerSnapshot() {
+  return false;
+}
+
 /** Tracks `prefers-reduced-motion: reduce`, updating live if the user changes it. */
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  return useSyncExternalStore(
+    subscribeToReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
   );
-
-  useEffect(() => {
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = (e: { matches: boolean }) => setReduced(e.matches);
-    mql.addEventListener("change", onChange);
-    setReduced(mql.matches);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return reduced;
 }

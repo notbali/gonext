@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
 import { AccessGate } from "@/components/AccessGate";
 import { MatchEditor } from "@/components/MatchEditor";
 import { matchDateLine } from "@/lib/dates";
@@ -57,29 +56,12 @@ export default async function MatchesPage() {
   const upcoming = team.matches.filter((m) => m.date >= now);
   const past = team.matches.filter((m) => m.date < now).reverse();
 
-  const nav = (
-    <TopNav
-      active="matches"
-      teamDivision={team.division}
-      isSignedIn={Boolean(session?.user)}
-      userName={session?.user?.name}
-      userImage={session?.user?.image}
-    />
-  );
-
   if (!session?.teammateId) {
-    return (
-      <div className="min-h-screen bg-bg">
-        {nav}
-        <AccessGate isSignedIn={Boolean(session?.user)} />
-      </div>
-    );
+    return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
   return (
     <div className="min-h-screen bg-bg">
-      {nav}
-
       <div className="mx-auto max-w-3xl px-8 py-8">
         <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
           Matches

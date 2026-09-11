@@ -1,21 +1,13 @@
-import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { NavTabs } from "@/components/NavTabs";
 import { signInWithDiscord, signOutAction } from "@/app/actions";
 
-const NAV_ITEMS = [
-  { key: "schedule", label: "SCHEDULE", href: "/" },
-  { key: "matches", label: "MATCHES", href: "/matches" },
-  { key: "roster", label: "ROSTER", href: "/roster" },
-] as const;
-
 export function TopNav({
-  active,
   teamDivision,
   isSignedIn,
   userName,
   userImage,
 }: {
-  active: "schedule" | "matches" | "roster";
   teamDivision: string;
   isSignedIn: boolean;
   userName?: string | null;
@@ -38,19 +30,7 @@ export function TopNav({
         </span>
       </div>
 
-      <nav className="flex items-center gap-6">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.key}
-            href={item.href}
-            className={`font-mono text-caption font-semibold tracking-wider ${
-              item.key === active ? "text-text-primary" : "text-text-dim hover:text-text-muted"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <NavTabs />
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5">

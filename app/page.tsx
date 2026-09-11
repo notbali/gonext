@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { TopNav } from "@/components/TopNav";
 import { AccessGate } from "@/components/AccessGate";
 import { PageHeader } from "@/components/PageHeader";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
@@ -33,28 +32,12 @@ export default async function SchedulePage({
     );
   }
 
-  const nav = (
-    <TopNav
-      active="schedule"
-      teamDivision={schedule.teamDivision}
-      isSignedIn={Boolean(session?.user)}
-      userName={session?.user?.name}
-      userImage={session?.user?.image}
-    />
-  );
-
   if (!session?.teammateId) {
-    return (
-      <div className="min-h-screen bg-bg">
-        {nav}
-        <AccessGate isSignedIn={Boolean(session?.user)} />
-      </div>
-    );
+    return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
   return (
     <div className="min-h-screen bg-bg">
-      {nav}
       <PageHeader
         weekDates={schedule.weekDates}
         weekOffset={weekOffset}
