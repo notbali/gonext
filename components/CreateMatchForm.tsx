@@ -79,7 +79,7 @@ export function CreateMatchForm({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-brand px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-wide text-white transition-transform duration-[var(--d-micro)] active:translate-y-0.5 disabled:opacity-60"
+        className="btn-press btn-glow rounded-md bg-brand px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
       >
         Add match
       </button>

@@ -304,3 +304,17 @@ body {
 /* The blanket `* { animation: none !important }` reduced-motion rule above already
    disables all of these; the component's own JS timer (120ms) removes the overlay
    from the DOM regardless, so reduced motion just snaps instead of animating. */
+
+/* Buttons: physical press feedback everywhere, an outward glow on hover for
+   primary (brand-colored) actions only. Disabled buttons never animate. */
+.btn-press {
+  transition: transform var(--d-micro) var(--e-snap);
+}
+.btn-press:active:not(:disabled) {
+  transform: translateY(var(--press)) scale(0.985);
+}
+.btn-glow:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px var(--color-brand),
+    0 0 22px rgba(255, 70, 85, 0.35);
+}
