@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { regenerateInvite } from "@/app/roster/actions";
+import { useToast } from "@/components/ToastProvider";
 
 export function InviteLinkCard({ teamId, token }: { teamId: string; token: string }) {
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { addToast } = useToast();
 
   useEffect(() => {
     // window.location isn't available during SSR, so this can't be computed at render time
@@ -49,7 +51,19 @@ export function InviteLinkCard({ teamId, token }: { teamId: string; token: strin
         <button
           type="button"
           disabled={isPending}
-          onClick={() => startTransition(async () => regenerateInvite(teamId))}
+          onClick={() =>
+            startTransition(async () => {
+              try {
+                await regenerateInvite(teamId);
+                addToast({ message: "Invite link regenerated.", variant: "success" });
+              } catch (err) {
+                addToast({
+                  message: err instanceof Error ? err.message : "Something went wrong.",
+                  variant: "error",
+                });
+              }
+            })
+          }
           className="shrink-0 rounded-md border border-border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:border-danger/50 disabled:opacity-60"
         >
           Regenerate

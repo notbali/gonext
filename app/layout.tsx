@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TopNav } from "@/components/TopNav";
 import { RouteTransition } from "@/components/RouteTransition";
+import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,15 +34,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-full font-sans antialiased">
-        {team && (
-          <TopNav
-            teamDivision={team.division}
-            isSignedIn={Boolean(session?.user)}
-            userName={session?.user?.name}
-            userImage={session?.user?.image}
-          />
-        )}
-        <RouteTransition>{children}</RouteTransition>
+        <ToastProvider>
+          {team && (
+            <TopNav
+              teamDivision={team.division}
+              isSignedIn={Boolean(session?.user)}
+              userName={session?.user?.name}
+              userImage={session?.user?.image}
+            />
+          )}
+          <RouteTransition>{children}</RouteTransition>
+        </ToastProvider>
       </body>
     </html>
   );

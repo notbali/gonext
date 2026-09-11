@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
 import { Avatar } from "@/components/Avatar";
 import { InviteLinkCard } from "@/components/InviteLinkCard";
+import { ActionForm } from "@/components/ActionForm";
 import {
   claimCoachRole,
   deactivateTeammate,
@@ -51,14 +52,13 @@ export default async function RosterPage() {
               This team has no active Coach, so nobody can manage the roster. Any teammate can
               claim the role to fix this.
             </p>
-            <form action={claimCoachRole}>
-              <button
-                type="submit"
-                className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wide text-brand-bright hover:text-brand"
-              >
-                Become Coach
-              </button>
-            </form>
+            <ActionForm
+              action={claimCoachRole}
+              successMessage="You're the Coach now."
+              className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wide text-brand-bright transition-colors duration-[var(--d-micro)] hover:text-brand disabled:opacity-60"
+            >
+              Become Coach
+            </ActionForm>
           </div>
         )}
 
@@ -86,22 +86,20 @@ export default async function RosterPage() {
                 </div>
                 {isCoach && !t.isCoach && (
                   <div className="flex items-center gap-4">
-                    <form action={promoteTeammate.bind(null, t.id)}>
-                      <button
-                        type="submit"
-                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-bright"
-                      >
-                        Make Coach
-                      </button>
-                    </form>
-                    <form action={deactivateTeammate.bind(null, t.id)}>
-                      <button
-                        type="submit"
-                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80"
-                      >
-                        Remove
-                      </button>
-                    </form>
+                    <ActionForm
+                      action={promoteTeammate.bind(null, t.id)}
+                      successMessage={`${t.user.name ?? "Teammate"} is now a Coach.`}
+                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
+                    >
+                      Make Coach
+                    </ActionForm>
+                    <ActionForm
+                      action={deactivateTeammate.bind(null, t.id)}
+                      successMessage={`${t.user.name ?? "Teammate"} was removed.`}
+                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger transition-colors duration-[var(--d-micro)] hover:text-danger/80 disabled:opacity-60"
+                    >
+                      Remove
+                    </ActionForm>
                   </div>
                 )}
               </div>
@@ -130,14 +128,13 @@ export default async function RosterPage() {
                     <Avatar name={t.user.name ?? "?"} src={t.user.image} size={28} />
                     <p className="text-body text-text-muted">{t.user.name}</p>
                   </div>
-                  <form action={reactivateTeammate.bind(null, t.id)}>
-                    <button
-                      type="submit"
-                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-bright"
-                    >
-                      Reactivate
-                    </button>
-                  </form>
+                  <ActionForm
+                    action={reactivateTeammate.bind(null, t.id)}
+                    successMessage={`${t.user.name ?? "Teammate"} is active again.`}
+                    className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
+                  >
+                    Reactivate
+                  </ActionForm>
                 </div>
               ))}
             </div>

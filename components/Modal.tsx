@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { EASE } from "@/lib/motion";
+import { useHasMounted } from "@/lib/use-has-mounted";
 
 export function Modal({
   open,
@@ -17,6 +18,9 @@ export function Modal({
   returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // document.body doesn't exist during SSR — calling createPortal with it directly
+  // would crash the server render. Only portal after mount, once it's safe.
+  const mounted = useHasMounted();
 
   useEffect(() => {
     if (!open) return;
@@ -31,6 +35,8 @@ export function Modal({
       elementToRefocus?.focus();
     };
   }, [open, returnFocusRef]);
+
+  if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>

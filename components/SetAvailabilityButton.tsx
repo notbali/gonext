@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { setWeekAvailability } from "@/app/actions";
 import { Modal } from "@/components/Modal";
+import { useToast } from "@/components/ToastProvider";
 
 export function SetAvailabilityButton({
   teammateId,
@@ -19,11 +20,20 @@ export function SetAvailabilityButton({
   const [timeRange, setTimeRange] = useState("");
   const [isPending, startTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { addToast } = useToast();
 
   function apply() {
     startTransition(async () => {
-      await setWeekAvailability(teammateId, dateISOs, status, timeRange || null);
-      setIsOpen(false);
+      try {
+        await setWeekAvailability(teammateId, dateISOs, status, timeRange || null);
+        addToast({ message: `Availability set for ${rangeLabel}.`, variant: "success" });
+        setIsOpen(false);
+      } catch (err) {
+        addToast({
+          message: err instanceof Error ? err.message : "Something went wrong.",
+          variant: "error",
+        });
+      }
     });
   }
 

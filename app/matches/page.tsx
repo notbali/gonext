@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
 import { MatchEditor } from "@/components/MatchEditor";
+import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { matchDateLine } from "@/lib/dates";
 import { createMatch } from "@/app/matches/actions";
 
@@ -76,44 +77,10 @@ export default async function MatchesPage() {
         {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
 
         {isCoach && (
-          <form
+          <CreateMatchForm
             action={createMatch}
-            className="mt-8 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-4"
-          >
-            <div className="w-28">
-              <label className="block font-mono text-caption text-text-dim">Group</label>
-              <input
-                name="group"
-                required
-                defaultValue={team.division.split("·").pop()?.trim() ?? ""}
-                className="mt-1 w-full rounded border border-border bg-surface-raised px-2 py-1.5 text-body text-text-primary"
-              />
-            </div>
-            <div>
-              <label className="block font-mono text-caption text-text-dim">Date</label>
-              <input
-                type="date"
-                name="date"
-                required
-                className="mt-1 rounded border border-border bg-surface-raised px-2 py-1.5 text-body text-text-primary"
-              />
-            </div>
-            <div>
-              <label className="block font-mono text-caption text-text-dim">Time</label>
-              <input
-                type="time"
-                name="time"
-                required
-                className="mt-1 rounded border border-border bg-surface-raised px-2 py-1.5 text-body text-text-primary"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-md bg-brand px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-wide text-white"
-            >
-              Add match
-            </button>
-          </form>
+            defaultGroup={team.division.split("·").pop()?.trim() ?? ""}
+          />
         )}
       </div>
     </div>

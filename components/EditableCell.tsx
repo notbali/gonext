@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability } from "@/app/actions";
+import { useToast } from "@/components/ToastProvider";
 
 const CELL_STYLES: Record<AvailabilityStatus, string> = {
   available: "border-primary/30 bg-primary-dim",
@@ -35,6 +36,7 @@ export function EditableCell({
   const [localRange, setLocalRange] = useState(timeRange ?? "");
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (lockState === "idle") return;
@@ -54,10 +56,14 @@ export function EditableCell({
           nextStatus === "available" ? nextRange || null : null,
         );
         setLockState("committed");
-      } catch {
+      } catch (err) {
         setLocalStatus(prevStatus);
         setLocalRange(prevRange);
         setLockState("conflict");
+        addToast({
+          message: err instanceof Error ? err.message : "Couldn't save that change.",
+          variant: "error",
+        });
       }
     });
   }
