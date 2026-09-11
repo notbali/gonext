@@ -12,6 +12,37 @@
   --raw-accent: #ff4655;
   --raw-accent-bright: #ff7a85;
   --raw-accent-dim: #3d141a;
+
+  /* motion: durations */
+  --d-micro: 120ms; /* hover, press, focus, icon state */
+  --d-ui: 240ms; /* cards, menus, tabs, cell writes */
+  --d-state: 480ms; /* alignment, confirm, route panels */
+  --d-amb: 9000ms; /* ambient only, never interactive */
+
+  /* motion: easing, named by intent */
+  --e-snap: cubic-bezier(0.2, 0, 0, 1); /* UI answering you */
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1); /* entrances */
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1); /* sweeps, loops */
+  --e-lock: cubic-bezier(0.34, 1.36, 0.64, 1); /* lock-in only */
+
+  /* motion: transform budget */
+  --lift: 2px;
+  --rise: 8px;
+  --press: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-ui: 120ms;
+    --d-state: 120ms;
+    --rise: 0px;
+    --lift: 0px;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
 }
 
 @theme inline {
