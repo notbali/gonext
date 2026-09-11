@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useRef, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { LayoutRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -18,7 +18,7 @@ import { panel } from "@/lib/motion";
  */
 function FrozenRouter({ children }: { children: ReactNode }) {
   const context = useContext(LayoutRouterContext);
-  const frozen = useRef(context).current;
+  const [frozen] = useState(context);
   return <LayoutRouterContext.Provider value={frozen}>{children}</LayoutRouterContext.Provider>;
 }
 
