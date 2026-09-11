@@ -4,6 +4,9 @@ import { AccessGate } from "@/components/AccessGate";
 import { Avatar } from "@/components/Avatar";
 import { InviteLinkCard } from "@/components/InviteLinkCard";
 import { ActionForm } from "@/components/ActionForm";
+import { RosterList } from "@/components/RosterList";
+import { getScheduleData } from "@/lib/schedule-data";
+import { completenessOf } from "@/lib/completeness";
 import {
   claimCoachRole,
   deactivateTeammate,
@@ -14,11 +17,14 @@ import {
 export default async function RosterPage() {
   const session = await auth();
 
-  const team = await db.team.findFirst({
-    include: {
-      teammates: { orderBy: { order: "asc" }, include: { user: true } },
-    },
-  });
+  const [team, schedule] = await Promise.all([
+    db.team.findFirst({
+      include: {
+        teammates: { orderBy: { order: "asc" }, include: { user: true } },
+      },
+    }),
+    getScheduleData(new Date(), new Date(), db, 1),
+  ]);
 
   if (!team) {
     return (
@@ -28,6 +34,7 @@ export default async function RosterPage() {
     );
   }
 
+  const completenessById = new Map(schedule?.teammates.map((t) => [t.id, completenessOf(t)]) ?? []);
   const isCoach = session?.isCoach ?? false;
   const active = team.teammates.filter((t) => t.active);
   const inactive = team.teammates.filter((t) => !t.active);
@@ -67,44 +74,18 @@ export default async function RosterPage() {
             Nobody has joined yet — share the invite link below.
           </p>
         ) : (
-          <div className="mt-6 flex flex-col gap-2">
-            {active.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-surface p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar name={t.user.name ?? "?"} src={t.user.image} size={32} />
-                  <p className="flex items-center gap-2 text-body-lg font-medium text-text-primary">
-                    {t.user.name}
-                    {t.isCoach && (
-                      <span className="rounded-full bg-brand-dim px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-bright">
-                        Coach
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {isCoach && !t.isCoach && (
-                  <div className="flex items-center gap-4">
-                    <ActionForm
-                      action={promoteTeammate.bind(null, t.id)}
-                      successMessage={`${t.user.name ?? "Teammate"} is now a Coach.`}
-                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
-                    >
-                      Make Coach
-                    </ActionForm>
-                    <ActionForm
-                      action={deactivateTeammate.bind(null, t.id)}
-                      successMessage={`${t.user.name ?? "Teammate"} was removed.`}
-                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger transition-colors duration-[var(--d-micro)] hover:text-danger/80 disabled:opacity-60"
-                    >
-                      Remove
-                    </ActionForm>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <RosterList
+            teammates={active.map((t) => ({
+              id: t.id,
+              name: t.user.name ?? "?",
+              image: t.user.image,
+              isCoach: t.isCoach,
+              completeness: completenessById.get(t.id) ?? 0,
+            }))}
+            viewerIsCoach={isCoach}
+            promoteTeammate={promoteTeammate}
+            deactivateTeammate={deactivateTeammate}
+          />
         )}
 
         {isCoach && (

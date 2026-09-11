@@ -201,3 +201,22 @@ body {
     transform: scaleY(1);
   }
 }
+
+/* Roster: availability completeness ring. */
+.availability-ring-progress {
+  transition: stroke-dashoffset var(--d-state) var(--e-inout);
+}
+.availability-ring-bloom .availability-ring-progress {
+  animation: gonext-ring-bloom 200ms var(--e-out);
+}
+@keyframes gonext-ring-bloom {
+  0% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--color-primary));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
