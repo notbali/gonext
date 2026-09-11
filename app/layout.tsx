@@ -7,6 +7,7 @@ import { RouteTransition } from "@/components/RouteTransition";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AmbientGrain } from "@/components/AmbientGrain";
 import { FaviconController } from "@/components/FaviconController";
+import { BootSequence } from "@/components/BootSequence";
 import { getScheduleData } from "@/lib/schedule-data";
 import { getFaviconSignals } from "@/lib/favicon-data";
 import "./globals.css";
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-full font-sans antialiased">
+        <BootSequence />
         <AmbientGrain />
         {faviconSignals && (
           <FaviconController

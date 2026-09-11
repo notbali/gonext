@@ -239,3 +239,68 @@ body {
     opacity: 0;
   }
 }
+
+/* Boot sequence: cold-session-only branded reveal. */
+.boot-sequence {
+  animation: gonext-fade-out 320ms var(--e-out) 1580ms forwards;
+}
+.boot-mark {
+  animation: gonext-mark-in 320ms var(--e-out) forwards;
+}
+.boot-mark-dot {
+  transform: scale(0);
+  animation: gonext-dot-in 220ms var(--e-lock) 160ms forwards;
+}
+.boot-wordmark {
+  clip-path: inset(0 100% 0 0);
+  animation: gonext-wordmark-in 240ms var(--e-snap) 200ms forwards;
+}
+.boot-stage-row {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: gonext-rise-in 240ms var(--e-out) forwards;
+}
+.boot-stage-ok {
+  color: var(--color-text-dim);
+  animation: gonext-stage-ok 160ms var(--e-snap) forwards;
+}
+@keyframes gonext-mark-in {
+  from {
+    transform: rotate(33deg) scale(0.72);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(45deg) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes gonext-dot-in {
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes gonext-wordmark-in {
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+@keyframes gonext-rise-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gonext-stage-ok {
+  to {
+    color: var(--color-primary);
+  }
+}
+@keyframes gonext-fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+/* The blanket `* { animation: none !important }` reduced-motion rule above already
+   disables all of these; the component's own JS timer (120ms) removes the overlay
+   from the DOM regardless, so reduced motion just snaps instead of animating. */
