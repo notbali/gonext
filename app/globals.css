@@ -87,3 +87,82 @@ body {
   background: var(--color-bg);
   color: var(--color-text-primary);
 }
+
+/* Availability grid cells: transform/border-color only — never width/top/box-shadow here. */
+.slot {
+  transition:
+    transform var(--d-micro) var(--e-snap),
+    border-color var(--d-micro) var(--e-snap);
+  will-change: transform;
+}
+.slot:hover {
+  transform: translateY(calc(-1 * var(--lift)));
+}
+.slot:active {
+  transform: translateY(1px) scale(0.985);
+}
+.slot[data-lock="committed"] {
+  animation: gonext-lock 220ms var(--e-lock);
+}
+.slot[data-lock="conflict"] {
+  animation: gonext-conflict 180ms var(--e-snap);
+  border-color: var(--color-danger);
+}
+@keyframes gonext-lock {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes gonext-conflict {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+
+/* Grid first reveal: cells cascade in by column once GridReveal flips data-revealed. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--rise));
+  transition:
+    opacity var(--d-ui) var(--e-out),
+    transform var(--d-ui) var(--e-out);
+}
+[data-revealed] [data-reveal] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Team alignment: a day column's header warms up once every teammate is available that day. */
+.day-column-header[data-complete] {
+  box-shadow: inset 0 -2px 0 0 var(--color-primary);
+  transition: box-shadow var(--d-state) var(--e-inout);
+}
+.day-column-header[data-sweep]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(76, 255, 126, 0.25), transparent);
+  animation: gonext-sweep 640ms var(--e-inout);
+  pointer-events: none;
+}
+@keyframes gonext-sweep {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
