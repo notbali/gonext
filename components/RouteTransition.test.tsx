@@ -4,16 +4,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { RouteTransition } from "./RouteTransition";
 
 const mockPathname = vi.fn();
-const mockSearchParams = vi.fn();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname(),
-  useSearchParams: () => mockSearchParams(),
 }));
 
 beforeEach(() => {
   mockPathname.mockReturnValue("/");
-  mockSearchParams.mockReturnValue(new URLSearchParams());
 });
 
 describe("RouteTransition", () => {
