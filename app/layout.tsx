@@ -6,6 +6,9 @@ import { TopNav } from "@/components/TopNav";
 import { RouteTransition } from "@/components/RouteTransition";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AmbientGrain } from "@/components/AmbientGrain";
+import { FaviconController } from "@/components/FaviconController";
+import { getScheduleData } from "@/lib/schedule-data";
+import { getFaviconSignals } from "@/lib/favicon-data";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,6 +32,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     db.team.findFirst({ select: { division: true } }),
   ]);
 
+  const today = new Date();
+  const schedule = session?.teammateId ? await getScheduleData(today, today, db, 1) : null;
+  const faviconSignals = schedule && session?.teammateId
+    ? getFaviconSignals(schedule, session.teammateId)
+    : null;
+
   return (
     <html
       lang="en"
@@ -36,6 +45,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full font-sans antialiased">
         <AmbientGrain />
+        {faviconSignals && (
+          <FaviconController
+            hasUnsetDays={faviconSignals.hasUnsetDays}
+            nearestMatchDate={faviconSignals.nearestMatchDate}
+          />
+        )}
         <ToastProvider>
           {team && (
             <TopNav
