@@ -1,9 +1,12 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { TopNav } from "@/components/TopNav";
 import { AccessGate } from "@/components/AccessGate";
 import { Avatar } from "@/components/Avatar";
 import { InviteLinkCard } from "@/components/InviteLinkCard";
+import { ActionForm } from "@/components/ActionForm";
+import { RosterList } from "@/components/RosterList";
+import { getScheduleData } from "@/lib/schedule-data";
+import { completenessOf } from "@/lib/completeness";
 import {
   claimCoachRole,
   deactivateTeammate,
@@ -14,11 +17,14 @@ import {
 export default async function RosterPage() {
   const session = await auth();
 
-  const team = await db.team.findFirst({
-    include: {
-      teammates: { orderBy: { order: "asc" }, include: { user: true } },
-    },
-  });
+  const [team, schedule] = await Promise.all([
+    db.team.findFirst({
+      include: {
+        teammates: { orderBy: { order: "asc" }, include: { user: true } },
+      },
+    }),
+    getScheduleData(new Date(), new Date(), db, 1),
+  ]);
 
   if (!team) {
     return (
@@ -28,35 +34,19 @@ export default async function RosterPage() {
     );
   }
 
+  const completenessById = new Map(schedule?.teammates.map((t) => [t.id, completenessOf(t)]) ?? []);
   const isCoach = session?.isCoach ?? false;
   const active = team.teammates.filter((t) => t.active);
   const inactive = team.teammates.filter((t) => !t.active);
   const hasActiveCoach = active.some((t) => t.isCoach);
   const currentTeammate = active.find((t) => t.id === session?.teammateId);
 
-  const nav = (
-    <TopNav
-      active="roster"
-      teamDivision={team.division}
-      isSignedIn={Boolean(session?.user)}
-      userName={session?.user?.name}
-      userImage={session?.user?.image}
-    />
-  );
-
   if (!session?.teammateId) {
-    return (
-      <div className="min-h-screen bg-bg">
-        {nav}
-        <AccessGate isSignedIn={Boolean(session?.user)} />
-      </div>
-    );
+    return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
   return (
     <div className="min-h-screen bg-bg">
-      {nav}
-
       <div className="mx-auto max-w-3xl px-8 py-8">
         <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
           Roster
@@ -69,14 +59,13 @@ export default async function RosterPage() {
               This team has no active Coach, so nobody can manage the roster. Any teammate can
               claim the role to fix this.
             </p>
-            <form action={claimCoachRole}>
-              <button
-                type="submit"
-                className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wide text-brand-bright hover:text-brand"
-              >
-                Become Coach
-              </button>
-            </form>
+            <ActionForm
+              action={claimCoachRole}
+              successMessage="You're the Coach now."
+              className="shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wide text-brand-bright transition-colors duration-[var(--d-micro)] hover:text-brand disabled:opacity-60"
+            >
+              Become Coach
+            </ActionForm>
           </div>
         )}
 
@@ -85,46 +74,18 @@ export default async function RosterPage() {
             Nobody has joined yet — share the invite link below.
           </p>
         ) : (
-          <div className="mt-6 flex flex-col gap-2">
-            {active.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-surface p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar name={t.user.name ?? "?"} src={t.user.image} size={32} />
-                  <p className="flex items-center gap-2 text-body-lg font-medium text-text-primary">
-                    {t.user.name}
-                    {t.isCoach && (
-                      <span className="rounded-full bg-brand-dim px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-bright">
-                        Coach
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {isCoach && !t.isCoach && (
-                  <div className="flex items-center gap-4">
-                    <form action={promoteTeammate.bind(null, t.id)}>
-                      <button
-                        type="submit"
-                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-bright"
-                      >
-                        Make Coach
-                      </button>
-                    </form>
-                    <form action={deactivateTeammate.bind(null, t.id)}>
-                      <button
-                        type="submit"
-                        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80"
-                      >
-                        Remove
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <RosterList
+            teammates={active.map((t) => ({
+              id: t.id,
+              name: t.user.name ?? "?",
+              image: t.user.image,
+              isCoach: t.isCoach,
+              completeness: completenessById.get(t.id) ?? 0,
+            }))}
+            viewerIsCoach={isCoach}
+            promoteTeammate={promoteTeammate}
+            deactivateTeammate={deactivateTeammate}
+          />
         )}
 
         {isCoach && (
@@ -148,14 +109,13 @@ export default async function RosterPage() {
                     <Avatar name={t.user.name ?? "?"} src={t.user.image} size={28} />
                     <p className="text-body text-text-muted">{t.user.name}</p>
                   </div>
-                  <form action={reactivateTeammate.bind(null, t.id)}>
-                    <button
-                      type="submit"
-                      className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-bright"
-                    >
-                      Reactivate
-                    </button>
-                  </form>
+                  <ActionForm
+                    action={reactivateTeammate.bind(null, t.id)}
+                    successMessage={`${t.user.name ?? "Teammate"} is active again.`}
+                    className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
+                  >
+                    Reactivate
+                  </ActionForm>
                 </div>
               ))}
             </div>

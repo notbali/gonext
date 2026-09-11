@@ -101,6 +101,11 @@ export function shortTimeLabel(date: Date): string {
   return minutes === 0 ? `${hours12}${meridiem}` : `${hours12}:${minutes.toString().padStart(2, "0")}${meridiem}`;
 }
 
+/** Whole minutes from `now` until `date` (negative once `date` is in the past). */
+export function minutesUntil(date: Date, now: Date): number {
+  return Math.round((date.getTime() - now.getTime()) / 60_000);
+}
+
 /** "TODAY" / "TOMORROW" / "IN N DAYS" within the displayed week, else "NEXT WEEK". */
 export function countdownLabel(matchDate: Date, today: Date, weekDates: Date[]): string {
   const diffDays = Math.round(

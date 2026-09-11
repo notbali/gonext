@@ -1,31 +1,48 @@
 import type { Match, Teammate } from "@/lib/types";
-import { countdownLabel, matchDateLine } from "@/lib/dates";
+import { countdownLabel, matchDateLine, minutesUntil } from "@/lib/dates";
 import { getConfirmedTeammates } from "@/lib/matches";
 import { Avatar } from "@/components/Avatar";
+import { GridReveal } from "@/components/GridReveal";
+
+const ENTRANCE_STAGGER_MS = 70;
+const URGENCY_WINDOW_MINUTES = 60;
 
 function MatchItem({
   match,
   teammates,
   weekDates,
   today,
+  index,
+  isNext,
 }: {
   match: Match;
   teammates: Teammate[];
   weekDates: Date[];
   today: Date;
+  index: number;
+  isNext: boolean;
 }) {
   const countdown = countdownLabel(match.date, today, weekDates);
   const isThisWeek = match.availabilityCollected;
   const confirmed = isThisWeek ? getConfirmedTeammates(match, teammates, weekDates) : [];
+  const minutesOut = minutesUntil(match.date, today);
+  const isUrgent = minutesOut >= 0 && minutesOut <= URGENCY_WINDOW_MINUTES;
 
   return (
-    <div className="border-t border-border py-4 first:border-t-0">
+    <div
+      data-testid="match-card"
+      data-reveal
+      style={{ transitionDelay: `${index * ENTRANCE_STAGGER_MS}ms` }}
+      className={`relative border-t border-border py-4 pl-3 first:border-t-0 ${isNext ? "accent-wipe" : ""}`}
+    >
       <div className="flex items-center justify-between gap-3">
         <p className="text-body-lg font-semibold text-text-primary">{matchDateLine(match)}</p>
         <span
+          data-testid="match-countdown"
+          data-urgent={isUrgent ? "" : undefined}
           className={`shrink-0 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider ${
             isThisWeek ? "bg-brand-dim text-brand-bright" : "border border-border text-text-dim"
-          }`}
+          } ${isUrgent ? "urgency-breathe" : ""}`}
         >
           {countdown}
         </span>
@@ -80,17 +97,21 @@ export function MatchesCard({
           View all
         </span>
       </div>
-      <div>
-        {matches.map((match) => (
-          <MatchItem
-            key={match.id}
-            match={match}
-            teammates={teammates}
-            weekDates={weekDates}
-            today={today}
-          />
-        ))}
-      </div>
+      <GridReveal>
+        <div>
+          {matches.map((match, index) => (
+            <MatchItem
+              key={match.id}
+              match={match}
+              teammates={teammates}
+              weekDates={weekDates}
+              today={today}
+              index={index}
+              isNext={index === 0}
+            />
+          ))}
+        </div>
+      </GridReveal>
     </div>
   );
 }

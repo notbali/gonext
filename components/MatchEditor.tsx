@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateMatch, deleteMatch } from "@/app/matches/actions";
+import { useToast } from "@/components/ToastProvider";
 
 function toDateInputValue(d: Date): string {
   const yyyy = d.getFullYear();
@@ -27,6 +28,14 @@ export function MatchEditor({
 }) {
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { addToast } = useToast();
+
+  function reportError(err: unknown) {
+    addToast({
+      message: err instanceof Error ? err.message : "Something went wrong.",
+      variant: "error",
+    });
+  }
 
   if (!editing) {
     return (
@@ -34,15 +43,24 @@ export function MatchEditor({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim hover:text-text-primary"
+          className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim hover:text-text-primary"
         >
           Edit
         </button>
         <button
           type="button"
           disabled={isPending}
-          onClick={() => startTransition(async () => deleteMatch(matchId))}
-          className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80 disabled:opacity-60"
+          onClick={() =>
+            startTransition(async () => {
+              try {
+                await deleteMatch(matchId);
+                addToast({ message: "Match deleted.", variant: "success" });
+              } catch (err) {
+                reportError(err);
+              }
+            })
+          }
+          className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80 disabled:opacity-60"
         >
           Delete
         </button>
@@ -54,8 +72,13 @@ export function MatchEditor({
     <form
       action={(formData) => {
         startTransition(async () => {
-          await updateMatch(matchId, formData);
-          setEditing(false);
+          try {
+            await updateMatch(matchId, formData);
+            addToast({ message: "Match updated.", variant: "success" });
+            setEditing(false);
+          } catch (err) {
+            reportError(err);
+          }
         });
       }}
       className="flex flex-wrap items-center gap-2"
@@ -83,14 +106,14 @@ export function MatchEditor({
       <button
         type="submit"
         disabled={isPending}
-        className="rounded bg-brand px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+        className="btn-press btn-glow rounded bg-brand px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
       >
         Save
       </button>
       <button
         type="button"
         onClick={() => setEditing(false)}
-        className="font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim"
+        className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim"
       >
         Cancel
       </button>

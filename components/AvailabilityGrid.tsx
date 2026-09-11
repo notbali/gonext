@@ -2,6 +2,9 @@ import type { DayAvailability, Match, Teammate } from "@/lib/types";
 import { chunkIntoWeeks, dayOfWeekLabel, isSameDate, shortTimeLabel, weekRangeLabel } from "@/lib/dates";
 import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
+import { GridReveal } from "@/components/GridReveal";
+import { DayColumnHeader } from "@/components/DayColumnHeader";
+import { isColumnFullyAvailable } from "@/lib/schedule-column-state";
 
 const CELL_STYLES: Record<DayAvailability["status"], string> = {
   available: "border-primary/30 bg-primary-dim text-primary-bright",
@@ -52,22 +55,15 @@ function WeekSection({
         {weekDates.map((date, i) => {
           const match = matchByDay[i];
           return (
-            <div
+            <DayColumnHeader
               key={date.toISOString()}
-              className={`flex flex-col items-center gap-1 border-l border-border py-3 ${
-                match ? "bg-brand-dim/40" : ""
-              }`}
-            >
-              <span className="font-mono text-caption font-medium uppercase tracking-widest text-text-dim">
-                {dayOfWeekLabel(date)}
-              </span>
-              <span className="text-body-lg font-bold text-text-primary">{date.getDate()}</span>
-              {match && (
-                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-brand-bright">
-                  Match {shortTimeLabel(match.date)}
-                </span>
-              )}
-            </div>
+              dow={dayOfWeekLabel(date)}
+              num={String(date.getDate())}
+              matchLabel={match ? shortTimeLabel(match.date) : undefined}
+              hasMatch={Boolean(match)}
+              complete={isColumnFullyAvailable(teammates, dayOffset + i)}
+              revealDelayMs={i * 45}
+            />
           );
         })}
       </div>
@@ -89,6 +85,8 @@ function WeekSection({
             return (
               <div
                 key={i}
+                data-reveal
+                style={{ transitionDelay: `${i * 45}ms` }}
                 className={`flex items-center justify-center border-l border-border p-2.5`}
               >
                 {isMine ? (
@@ -134,18 +132,20 @@ export function AvailabilityGrid({
   const weeks = chunkIntoWeeks(weekDates);
 
   return (
-    <div className="flex-1 overflow-hidden rounded-lg border border-border bg-surface">
-      {weeks.map((week, weekIndex) => (
-        <WeekSection
-          key={week[0].toISOString()}
-          weekDates={week}
-          dayOffset={weekIndex * 7}
-          teammates={teammates}
-          matches={matches}
-          myTeammateId={myTeammateId}
-          isFirst={weekIndex === 0}
-        />
-      ))}
-    </div>
+    <GridReveal>
+      <div className="flex-1 overflow-hidden rounded-lg border border-border bg-surface">
+        {weeks.map((week, weekIndex) => (
+          <WeekSection
+            key={week[0].toISOString()}
+            weekDates={week}
+            dayOffset={weekIndex * 7}
+            teammates={teammates}
+            matches={matches}
+            myTeammateId={myTeammateId}
+            isFirst={weekIndex === 0}
+          />
+        ))}
+      </div>
+    </GridReveal>
   );
 }

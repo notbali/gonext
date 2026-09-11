@@ -32,7 +32,7 @@ export function PageHeader({
           <Link
             href={`/?week=${weekOffset - weekCount}`}
             aria-label={`Previous ${weekCount} weeks`}
-            className="rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+            className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
           >
             ‹
           </Link>
@@ -51,7 +51,7 @@ export function PageHeader({
           <Link
             href={`/?week=${weekOffset + weekCount}`}
             aria-label={`Next ${weekCount} weeks`}
-            className="rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+            className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
           >
             ›
           </Link>

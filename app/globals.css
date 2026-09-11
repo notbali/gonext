@@ -12,6 +12,37 @@
   --raw-accent: #ff4655;
   --raw-accent-bright: #ff7a85;
   --raw-accent-dim: #3d141a;
+
+  /* motion: durations */
+  --d-micro: 120ms; /* hover, press, focus, icon state */
+  --d-ui: 240ms; /* cards, menus, tabs, cell writes */
+  --d-state: 480ms; /* alignment, confirm, route panels */
+  --d-amb: 9000ms; /* ambient only, never interactive */
+
+  /* motion: easing, named by intent */
+  --e-snap: cubic-bezier(0.2, 0, 0, 1); /* UI answering you */
+  --e-out: cubic-bezier(0.16, 1, 0.3, 1); /* entrances */
+  --e-inout: cubic-bezier(0.65, 0, 0.35, 1); /* sweeps, loops */
+  --e-lock: cubic-bezier(0.34, 1.36, 0.64, 1); /* lock-in only */
+
+  /* motion: transform budget */
+  --lift: 2px;
+  --rise: 8px;
+  --press: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-ui: 120ms;
+    --d-state: 120ms;
+    --rise: 0px;
+    --lift: 0px;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
 }
 
 @theme inline {
@@ -55,4 +86,235 @@
 body {
   background: var(--color-bg);
   color: var(--color-text-primary);
+}
+
+/* Availability grid cells: transform/border-color only — never width/top/box-shadow here. */
+.slot {
+  transition:
+    transform var(--d-micro) var(--e-snap),
+    border-color var(--d-micro) var(--e-snap);
+  will-change: transform;
+}
+.slot:hover {
+  transform: translateY(calc(-1 * var(--lift)));
+}
+.slot:active {
+  transform: translateY(1px) scale(0.985);
+}
+.slot[data-lock="committed"] {
+  animation: gonext-lock 220ms var(--e-lock);
+}
+.slot[data-lock="conflict"] {
+  animation: gonext-conflict 180ms var(--e-snap);
+  border-color: var(--color-danger);
+}
+@keyframes gonext-lock {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes gonext-conflict {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+
+/* Grid first reveal: cells cascade in by column once GridReveal flips data-revealed. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--rise));
+  transition:
+    opacity var(--d-ui) var(--e-out),
+    transform var(--d-ui) var(--e-out);
+}
+[data-revealed] [data-reveal] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Team alignment: a day column's header warms up once every teammate is available that day. */
+.day-column-header[data-complete] {
+  box-shadow: inset 0 -2px 0 0 var(--color-primary);
+  transition: box-shadow var(--d-state) var(--e-inout);
+}
+.day-column-header[data-sweep]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(76, 255, 126, 0.25), transparent);
+  animation: gonext-sweep 640ms var(--e-inout);
+  pointer-events: none;
+}
+@keyframes gonext-sweep {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Matches list: the only idle loop in the system, because it's the only thing genuinely counting down. */
+.urgency-breathe {
+  animation: gonext-breathe 3s var(--e-inout) infinite;
+}
+@keyframes gonext-breathe {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Next-match card: a left accent bar wipes in once the card has landed. */
+.accent-wipe::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+[data-revealed] .accent-wipe::before {
+  animation: gonext-wipe 400ms var(--e-out) 320ms forwards;
+}
+@keyframes gonext-wipe {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Roster: availability completeness ring. */
+.availability-ring-progress {
+  transition: stroke-dashoffset var(--d-state) var(--e-inout);
+}
+.availability-ring-bloom .availability-ring-progress {
+  animation: gonext-ring-bloom 200ms var(--e-out);
+}
+@keyframes gonext-ring-bloom {
+  0% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px var(--color-primary));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+/* Ambient HUD grain: a near-invisible scan drifting down behind the page content. */
+.ambient-grain {
+  background: linear-gradient(180deg, transparent, rgba(255, 70, 85, 0.05) 45%, transparent);
+  animation: gonext-amb var(--d-amb) linear infinite;
+}
+@keyframes gonext-amb {
+  0% {
+    transform: translateY(-4vh);
+  }
+  100% {
+    transform: translateY(104vh);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-grain {
+    opacity: 0;
+  }
+}
+
+/* Boot sequence: cold-session-only branded reveal. */
+.boot-sequence {
+  animation: gonext-fade-out 320ms var(--e-out) 1580ms forwards;
+}
+.boot-mark {
+  animation: gonext-mark-in 320ms var(--e-out) forwards;
+}
+.boot-mark-dot {
+  transform: scale(0);
+  animation: gonext-dot-in 220ms var(--e-lock) 160ms forwards;
+}
+.boot-wordmark {
+  clip-path: inset(0 100% 0 0);
+  animation: gonext-wordmark-in 240ms var(--e-snap) 200ms forwards;
+}
+.boot-stage-row {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: gonext-rise-in 240ms var(--e-out) forwards;
+}
+.boot-stage-ok {
+  color: var(--color-text-dim);
+  animation: gonext-stage-ok 160ms var(--e-snap) forwards;
+}
+@keyframes gonext-mark-in {
+  from {
+    transform: rotate(33deg) scale(0.72);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(45deg) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes gonext-dot-in {
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes gonext-wordmark-in {
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+@keyframes gonext-rise-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gonext-stage-ok {
+  to {
+    color: var(--color-primary);
+  }
+}
+@keyframes gonext-fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+/* The blanket `* { animation: none !important }` reduced-motion rule above already
+   disables all of these; the component's own JS timer (120ms) removes the overlay
+   from the DOM regardless, so reduced motion just snaps instead of animating. */
+
+/* Buttons: physical press feedback everywhere, an outward glow on hover for
+   primary (brand-colored) actions only. Disabled buttons never animate. */
+.btn-press {
+  transition: transform var(--d-micro) var(--e-snap);
+}
+.btn-press:active:not(:disabled) {
+  transform: translateY(var(--press)) scale(0.985);
+}
+.btn-glow:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 1px var(--color-brand),
+    0 0 22px rgba(255, 70, 85, 0.35);
 }
