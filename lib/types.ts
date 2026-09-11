@@ -1,5 +1,12 @@
 export type AvailabilityStatus = "available" | "tentative" | "unavailable" | "not-set";
 
+export const AVAILABILITY_STATUS_OPTIONS: { value: AvailabilityStatus; label: string }[] = [
+  { value: "not-set", label: "Not set" },
+  { value: "available", label: "Available" },
+  { value: "tentative", label: "Tentative" },
+  { value: "unavailable", label: "Unavailable" },
+];
+
 export interface DayAvailability {
   status: AvailabilityStatus;
   /** Only meaningful when status is "available". Absent means the full day. */

@@ -28,6 +28,33 @@ export async function updateAvailability(
   revalidatePath("/");
 }
 
+export async function setWeekAvailability(
+  teammateId: string,
+  dateISOs: string[],
+  status: AvailabilityStatus,
+  timeRange: string | null,
+) {
+  const session = await auth();
+  if (!session?.teammateId || session.teammateId !== teammateId) {
+    throw new Error("You can only edit your own availability.");
+  }
+
+  const resolvedRange = status === "available" ? timeRange : null;
+
+  await Promise.all(
+    dateISOs.map((dateISO) => {
+      const date = new Date(dateISO);
+      return db.availability.upsert({
+        where: { teammateId_date: { teammateId, date } },
+        update: { status, timeRange: resolvedRange },
+        create: { teammateId, date, status, timeRange: resolvedRange },
+      });
+    }),
+  );
+
+  revalidatePath("/");
+}
+
 export async function signInWithDiscord(redirectTo?: string) {
   await signIn("discord", redirectTo ? { redirectTo } : undefined);
 }
