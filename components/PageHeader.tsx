@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { dateRangeLabel } from "@/lib/dates";
+import { SetAvailabilityButton } from "@/components/SetAvailabilityButton";
 
 export function PageHeader({
   weekDates,
   weekOffset,
   weekCount,
+  myTeammateId,
 }: {
   weekDates: Date[];
   weekOffset: number;
   weekCount: number;
+  myTeammateId: string;
 }) {
   const isCurrentRange = weekOffset === 0;
+  const rangeLabel = dateRangeLabel(weekDates);
 
   return (
     <div className="flex items-end justify-between border-b border-border bg-bg px-8 py-6">
@@ -19,7 +23,7 @@ export function PageHeader({
           Team Availability
         </p>
         <h1 className="mt-1 text-display font-bold tracking-tight text-text-primary">
-          {dateRangeLabel(weekDates)}
+          {rangeLabel}
         </h1>
       </div>
 
@@ -52,13 +56,11 @@ export function PageHeader({
             ›
           </Link>
         </div>
-        <button
-          type="button"
-          disabled
-          className="rounded-md bg-brand px-4 py-2.5 font-mono text-caption font-bold uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:opacity-90"
-        >
-          + Set availability
-        </button>
+        <SetAvailabilityButton
+          teammateId={myTeammateId}
+          dateISOs={weekDates.map((d) => d.toISOString())}
+          rangeLabel={rangeLabel}
+        />
       </div>
     </div>
   );

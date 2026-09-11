@@ -1,15 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { AvailabilityStatus } from "@/lib/types";
+import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability } from "@/app/actions";
-
-const STATUS_OPTIONS: { value: AvailabilityStatus; label: string }[] = [
-  { value: "not-set", label: "Not set" },
-  { value: "available", label: "Available" },
-  { value: "tentative", label: "Tentative" },
-  { value: "unavailable", label: "Unavailable" },
-];
 
 const CELL_STYLES: Record<AvailabilityStatus, string> = {
   available: "border-primary/30 bg-primary-dim",
@@ -58,7 +51,7 @@ export function EditableCell({
         }}
         className="w-full rounded border border-border bg-surface-raised px-1 py-1 text-center font-mono text-[10px] font-semibold uppercase tracking-wide text-text-primary disabled:opacity-60"
       >
-        {STATUS_OPTIONS.map((o) => (
+        {AVAILABILITY_STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>

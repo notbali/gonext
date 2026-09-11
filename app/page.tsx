@@ -55,7 +55,12 @@ export default async function SchedulePage({
   return (
     <div className="min-h-screen bg-bg">
       {nav}
-      <PageHeader weekDates={schedule.weekDates} weekOffset={weekOffset} weekCount={WEEKS_AHEAD} />
+      <PageHeader
+        weekDates={schedule.weekDates}
+        weekOffset={weekOffset}
+        weekCount={WEEKS_AHEAD}
+        myTeammateId={session.teammateId}
+      />
       <div className="flex gap-6 px-8 py-6">
         <AvailabilityGrid
           weekDates={schedule.weekDates}
