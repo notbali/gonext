@@ -38,20 +38,27 @@ export function EditableCell({
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
 
+  // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
+  // revalidates and this cell re-renders with new props. Skipped while a save
+  // is in flight so it doesn't clobber this cell's own optimistic update.
+  // Adjusting state during render (rather than in an effect) avoids an extra
+  // commit — see https://react.dev/learn/you-might-not-need-an-effect.
+  const [prevStatus, setPrevStatus] = useState(status);
+  const [prevTimeRange, setPrevTimeRange] = useState(timeRange);
+  if (status !== prevStatus || timeRange !== prevTimeRange) {
+    setPrevStatus(status);
+    setPrevTimeRange(timeRange);
+    if (!isPending) {
+      setLocalStatus(status);
+      setLocalRange(timeRange ?? "");
+    }
+  }
+
   useEffect(() => {
     if (lockState === "idle") return;
     const t = setTimeout(() => setLockState("idle"), LOCK_STATE_DURATION_MS[lockState]);
     return () => clearTimeout(t);
   }, [lockState]);
-
-  // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
-  // revalidates and this cell re-renders with new props. Skipped while a save
-  // is in flight so it doesn't clobber this cell's own optimistic update.
-  useEffect(() => {
-    if (isPending) return;
-    setLocalStatus(status);
-    setLocalRange(timeRange ?? "");
-  }, [status, timeRange, isPending]);
 
   function save(nextStatus: AvailabilityStatus, nextRange: string) {
     const prevStatus = localStatus;
