@@ -4,6 +4,14 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { EditableCell } from "./EditableCell";
 import { ToastProvider } from "./ToastProvider";
 
+function Wrapper(props: { status: "available" | "tentative" | "unavailable" | "not-set"; timeRange?: string }) {
+  return (
+    <ToastProvider>
+      <EditableCell teammateId="t1" dateISO="2026-09-14T00:00:00.000Z" {...props} />
+    </ToastProvider>
+  );
+}
+
 const mockUpdateAvailability = vi.fn();
 vi.mock("@/app/actions", () => ({
   updateAvailability: (...args: unknown[]) => mockUpdateAvailability(...args),
@@ -51,5 +59,23 @@ describe("EditableCell", () => {
     expect(screen.getByText("You can only edit your own availability.")).toBeInTheDocument();
 
     await waitFor(() => expect(cell).not.toHaveAttribute("data-lock"));
+  });
+
+  it("picks up a status change from fresh props, e.g. after a bulk edit revalidates the page", () => {
+    const { rerender } = render(<Wrapper status="not-set" />);
+    expect(screen.getByRole("combobox")).toHaveValue("not-set");
+
+    rerender(<Wrapper status="unavailable" />);
+
+    expect(screen.getByRole("combobox")).toHaveValue("unavailable");
+  });
+
+  it("picks up a time range change from fresh props alongside the new status", () => {
+    const { rerender } = render(<Wrapper status="not-set" />);
+
+    rerender(<Wrapper status="available" timeRange="6-8pm" />);
+
+    expect(screen.getByRole("combobox")).toHaveValue("available");
+    expect(screen.getByPlaceholderText("All day")).toHaveValue("6-8pm");
   });
 });
