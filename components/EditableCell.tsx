@@ -44,6 +44,15 @@ export function EditableCell({
     return () => clearTimeout(t);
   }, [lockState]);
 
+  // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
+  // revalidates and this cell re-renders with new props. Skipped while a save
+  // is in flight so it doesn't clobber this cell's own optimistic update.
+  useEffect(() => {
+    if (isPending) return;
+    setLocalStatus(status);
+    setLocalRange(timeRange ?? "");
+  }, [status, timeRange, isPending]);
+
   function save(nextStatus: AvailabilityStatus, nextRange: string) {
     const prevStatus = localStatus;
     const prevRange = localRange;
