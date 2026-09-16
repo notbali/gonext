@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { RosterList } from "./RosterList";
 import { ToastProvider } from "./ToastProvider";
 
@@ -96,5 +96,27 @@ describe("RosterList", () => {
   it("hides coach actions entirely for a non-coach viewer", () => {
     renderList([teammate("a", "Alice")], { viewerIsCoach: false });
     expect(screen.queryByRole("button", { name: "Make Coach" })).not.toBeInTheDocument();
+  });
+
+  it("shows an error toast instead of throwing when promoteTeammate rejects", async () => {
+    renderList([teammate("a", "Alice")], {
+      promoteTeammate: vi.fn().mockRejectedValue(new Error("Only a coach can manage the roster.")),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Make Coach" }));
+    await waitFor(() =>
+      expect(screen.getByText("Only a coach can manage the roster.")).toBeInTheDocument(),
+    );
+  });
+
+  it("shows an error toast instead of throwing when deactivateTeammate rejects", async () => {
+    renderList([teammate("a", "Alice")], {
+      deactivateTeammate: vi.fn().mockRejectedValue(new Error("Coaches cannot be removed.")),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    await waitFor(() =>
+      expect(screen.getByText("Coaches cannot be removed.")).toBeInTheDocument(),
+    );
   });
 });
