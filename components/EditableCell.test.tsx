@@ -17,6 +17,11 @@ vi.mock("@/app/actions", () => ({
   updateAvailability: (...args: unknown[]) => mockUpdateAvailability(...args),
 }));
 
+const mockRefresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
+}));
+
 function renderCell(props: { status: "available" | "tentative" | "unavailable" | "not-set" }) {
   return render(
     <ToastProvider>
@@ -28,6 +33,15 @@ function renderCell(props: { status: "available" | "tentative" | "unavailable" |
 describe("EditableCell", () => {
   beforeEach(() => {
     mockUpdateAvailability.mockReset();
+    mockRefresh.mockReset();
+  });
+
+  it("refreshes the router once the write resolves, so the grid reflects the change without a manual reload", async () => {
+    mockUpdateAvailability.mockResolvedValue(undefined);
+    renderCell({ status: "not-set" });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "available" } });
+
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
   });
 
   it("optimistically shows the new status immediately, before the write resolves", () => {
