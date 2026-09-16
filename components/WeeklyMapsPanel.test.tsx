@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { WeeklyMapsPanel } from "./WeeklyMapsPanel";
+import { mapImageSrc } from "@/lib/valorant-maps";
 import type { Match } from "@/lib/types";
 
 const week1 = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 14 + i)); // Sep 14-20
@@ -19,7 +20,7 @@ function playoffsMatch(overrides: Partial<Match> = {}): Match {
 }
 
 describe("WeeklyMapsPanel", () => {
-  it("renders one row per week with its date range and assigned map", () => {
+  it("renders one row per week with its date range, always visible", () => {
     render(
       <WeeklyMapsPanel
         weeks={[
@@ -32,22 +33,45 @@ describe("WeeklyMapsPanel", () => {
 
     expect(screen.getAllByTestId("weekly-maps-week")).toHaveLength(2);
     expect(screen.getByText("SEP 14 — 20")).toBeInTheDocument();
-    expect(screen.getByText("ASCENT")).toBeInTheDocument();
     expect(screen.getByText("SEP 21 — 27")).toBeInTheDocument();
-    expect(screen.getByText("BIND")).toBeInTheDocument();
   });
 
-  it("shows a TBD placeholder for a week with no map set yet", () => {
+  it("renders the week's assigned map as hover-reveal artwork, hidden until hover", () => {
+    render(<WeeklyMapsPanel weeks={[{ weekDates: week1, map: "ASCENT" }]} playoffsMatch={null} />);
+
+    const reveal = screen.getByTestId("weekly-maps-reveal");
+    expect(reveal).toHaveClass("opacity-0");
+    expect(reveal).toHaveClass("group-hover:opacity-100");
+
+    const artwork = screen.getByAltText("ASCENT");
+    expect(artwork.tagName).toBe("IMG");
+    expect(artwork.getAttribute("src")).toContain(encodeURIComponent(mapImageSrc("ASCENT")!));
+  });
+
+  it("shows a TBD placeholder, still hover-gated, for a week with no map set yet", () => {
     render(<WeeklyMapsPanel weeks={[{ weekDates: week1, map: null }]} playoffsMatch={null} />);
 
-    expect(screen.getByText(/TBD/)).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    const reveal = screen.getByTestId("weekly-maps-reveal");
+    expect(reveal).toHaveClass("opacity-0");
+    expect(reveal).toHaveTextContent("MAP TBD");
   });
 
-  it("renders a distinct Playoffs entry when a Playoffs match is upcoming", () => {
+  it("renders a distinct Playoffs entry when a Playoffs match is upcoming, showing its date by default", () => {
     render(<WeeklyMapsPanel weeks={[{ weekDates: week1, map: "ASCENT" }]} playoffsMatch={playoffsMatch()} />);
 
-    expect(screen.getByTestId("weekly-maps-playoffs")).toBeInTheDocument();
-    expect(screen.getByTestId("weekly-maps-playoffs")).toHaveTextContent("PLAYOFFS");
+    const playoffsRow = screen.getByTestId("weekly-maps-playoffs");
+    expect(playoffsRow).toBeInTheDocument();
+    expect(playoffsRow).toHaveTextContent("SEP 27");
+  });
+
+  it("hides the PLAYOFFS text behind the same hover-reveal treatment as map weeks", () => {
+    render(<WeeklyMapsPanel weeks={[{ weekDates: week1, map: "ASCENT" }]} playoffsMatch={playoffsMatch()} />);
+
+    const reveal = screen.getByTestId("weekly-maps-playoffs-reveal");
+    expect(reveal).toHaveClass("opacity-0");
+    expect(reveal).toHaveClass("group-hover:opacity-100");
+    expect(reveal).toHaveTextContent("PLAYOFFS");
   });
 
   it("renders no Playoffs entry when there is none upcoming", () => {
