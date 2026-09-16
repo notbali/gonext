@@ -43,6 +43,18 @@ describe("MatchesCard countdown urgency", () => {
   });
 });
 
+describe("MatchesCard view all link", () => {
+  it("links the 'View all' label to the matches page", () => {
+    const today = new Date(2026, 8, 1);
+    render(
+      <MatchesCard matches={[match({})]} teammates={teammates} weekDates={weekDates} today={today} />,
+    );
+
+    const link = screen.getByRole("link", { name: /view all/i });
+    expect(link).toHaveAttribute("href", "/matches");
+  });
+});
+
 describe("MatchesCard entrance", () => {
   it("gives each match card an increasing reveal delay proportional to its index", () => {
     const today = new Date(2026, 8, 1);

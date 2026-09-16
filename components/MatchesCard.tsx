@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Match, Teammate } from "@/lib/types";
 import { countdownLabel, matchDateLine, minutesUntil } from "@/lib/dates";
 import { getConfirmedTeammates } from "@/lib/matches";
@@ -93,9 +94,12 @@ export function MatchesCard({
         <p className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
           Premier matches
         </p>
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-dim">
+        <Link
+          href="/matches"
+          className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-dim transition-colors duration-[var(--d-micro)] hover:text-text-muted"
+        >
           View all
-        </span>
+        </Link>
       </div>
       <GridReveal>
         <div>
