@@ -5,7 +5,7 @@ import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
-import { addWeeks } from "@/lib/dates";
+import { addWeeks, nowInTeamTimezone } from "@/lib/dates";
 
 function parseWeekOffset(raw: string | undefined): number {
   const n = Number(raw);
@@ -19,8 +19,13 @@ export default async function SchedulePage({
 }) {
   const { week } = await searchParams;
   const weekOffset = parseWeekOffset(week);
+  // `today` is the real current instant, used for real-time arithmetic (e.g.
+  // match countdowns) further down the tree — it must stay a genuine `Date`.
+  // `weekReference` only needs to identify the correct *calendar day* in the
+  // team's own Eastern time, so getWeekStart/getWeekDates (which read local
+  // Date getters) pick the right week even when the server itself runs in UTC.
   const today = new Date();
-  const weekReference = addWeeks(today, weekOffset);
+  const weekReference = addWeeks(nowInTeamTimezone(), weekOffset);
   const [session, schedule] = await Promise.all([auth(), getScheduleData(weekReference, today)]);
 
   if (!schedule) {
