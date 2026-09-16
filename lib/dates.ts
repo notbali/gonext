@@ -4,6 +4,89 @@ const MONTH_LABELS = [
   "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
 ] as const;
 
+/**
+ * This team is US-based and single-timezone; rather than build out general
+ * i18n/timezone support we just pin all match-time display and "current
+ * week" calculations to Eastern Time, regardless of the server's own clock
+ * (Neon/hosting typically runs in UTC).
+ */
+export const TEAM_TIMEZONE = "America/New_York";
+
+/** Eastern-local wall-clock fields for a given instant. */
+export interface EasternParts {
+  year: number;
+  month: number; // 0-indexed, matches Date#getMonth()
+  day: number;
+  hours: number;
+  minutes: number;
+  dayOfWeek: number; // 0 = Sunday ... 6 = Saturday, matches Date#getDay()
+}
+
+const EASTERN_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: TEAM_TIMEZONE,
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  hourCycle: "h23",
+  weekday: "short",
+});
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+
+/** Reads `date`'s wall-clock day/hour/minute as observed in `TEAM_TIMEZONE`. */
+export function getEasternParts(date: Date): EasternParts {
+  const parts = EASTERN_FORMATTER.formatToParts(date);
+  const lookup: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {};
+  for (const part of parts) lookup[part.type] = part.value;
+
+  return {
+    year: Number(lookup.year),
+    month: Number(lookup.month) - 1,
+    day: Number(lookup.day),
+    hours: Number(lookup.hour) % 24, // h23 can format midnight as "24"
+    minutes: Number(lookup.minute),
+    dayOfWeek: WEEKDAY_INDEX[lookup.weekday as string],
+  };
+}
+
+/**
+ * Inverse of `getEasternParts`: converts Eastern-local wall-clock fields
+ * (e.g. entered by a coach into a date/time form, since match times are
+ * always meant as the team's own Eastern time) into the real UTC instant
+ * they represent. Resolves DST with a single correction pass against the
+ * actual Eastern UTC offset for the target date.
+ */
+export function easternPartsToUtc(
+  parts: Pick<EasternParts, "year" | "month" | "day" | "hours" | "minutes">,
+): Date {
+  const targetMillis = Date.UTC(parts.year, parts.month, parts.day, parts.hours, parts.minutes);
+  const guessedAsEastern = getEasternParts(new Date(targetMillis));
+  const guessedMillis = Date.UTC(
+    guessedAsEastern.year,
+    guessedAsEastern.month,
+    guessedAsEastern.day,
+    guessedAsEastern.hours,
+    guessedAsEastern.minutes,
+  );
+  return new Date(targetMillis + (targetMillis - guessedMillis));
+}
+
+/**
+ * The current instant, as a `Date` whose *local* getters (getFullYear,
+ * getMonth, getDate, getDay, getHours, ...) report `TEAM_TIMEZONE`'s
+ * wall-clock, regardless of the server process's own timezone. Intended for
+ * feeding into date-math helpers below (`getWeekStart`, `getLookaheadDates`,
+ * ...) that operate on local Date getters/setters.
+ */
+export function nowInTeamTimezone(): Date {
+  const p = getEasternParts(new Date());
+  return new Date(p.year, p.month, p.day, p.hours, p.minutes);
+}
+
 function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -96,23 +179,21 @@ export function dateRangeLabel(dates: Date[]): string {
 }
 
 export function matchDateLine(match: { date: Date; group: string }): string {
-  const d = match.date;
-  const day = DAY_LABELS[(d.getDay() + 6) % 7];
-  const month = MONTH_LABELS[d.getMonth()];
-  const hours24 = d.getHours();
-  const hours12 = ((hours24 + 11) % 12) + 1;
-  const meridiem = hours24 < 12 ? "AM" : "PM";
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-  return `${day} ${month} ${d.getDate()} · ${hours12}:${minutes} ${meridiem} ET · ${match.group}`;
+  const p = getEasternParts(match.date);
+  const day = DAY_LABELS[(p.dayOfWeek + 6) % 7];
+  const month = MONTH_LABELS[p.month];
+  const hours12 = ((p.hours + 11) % 12) + 1;
+  const meridiem = p.hours < 12 ? "AM" : "PM";
+  const minutes = p.minutes.toString().padStart(2, "0");
+  return `${day} ${month} ${p.day} · ${hours12}:${minutes} ${meridiem} ET · ${match.group}`;
 }
 
-/** Compact time for tight UI, e.g. "7P" or "7:30P". */
+/** Compact time for tight UI, e.g. "7P" or "7:30P" — in Eastern Time. */
 export function shortTimeLabel(date: Date): string {
-  const hours24 = date.getHours();
-  const hours12 = ((hours24 + 11) % 12) + 1;
-  const meridiem = hours24 < 12 ? "A" : "P";
-  const minutes = date.getMinutes();
-  return minutes === 0 ? `${hours12}${meridiem}` : `${hours12}:${minutes.toString().padStart(2, "0")}${meridiem}`;
+  const p = getEasternParts(date);
+  const hours12 = ((p.hours + 11) % 12) + 1;
+  const meridiem = p.hours < 12 ? "A" : "P";
+  return p.minutes === 0 ? `${hours12}${meridiem}` : `${hours12}:${p.minutes.toString().padStart(2, "0")}${meridiem}`;
 }
 
 /** Whole minutes from `now` until `date` (negative once `date` is in the past). */

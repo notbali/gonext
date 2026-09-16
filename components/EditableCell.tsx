@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability } from "@/app/actions";
 import { useToast } from "@/components/ToastProvider";
@@ -37,6 +38,7 @@ export function EditableCell({
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
+  const router = useRouter();
 
   // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
   // revalidates and this cell re-renders with new props. Skipped while a save
@@ -71,7 +73,6 @@ export function EditableCell({
           nextStatus,
           nextStatus === "available" ? nextRange || null : null,
         );
-        setLockState("committed");
       } catch (err) {
         setLocalStatus(prevStatus);
         setLocalRange(prevRange);
@@ -80,7 +81,16 @@ export function EditableCell({
           message: err instanceof Error ? err.message : "Couldn't save that change.",
           variant: "error",
         });
+        return;
       }
+      // The write already succeeded, so a failure here must not be reported
+      // as a save failure — best-effort only.
+      try {
+        router.refresh();
+      } catch {
+        // ignore
+      }
+      setLockState("committed");
     });
   }
 

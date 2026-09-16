@@ -5,7 +5,7 @@ import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
-import { addWeeks, parseWeekOffset } from "@/lib/dates";
+import { addWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
 
 export default async function SchedulePage({
   searchParams,
@@ -15,7 +15,7 @@ export default async function SchedulePage({
   const { week } = await searchParams;
   const weekOffset = parseWeekOffset(week, WEEKS_AHEAD);
   const today = new Date();
-  const weekReference = addWeeks(today, weekOffset);
+  const weekReference = addWeeks(nowInTeamTimezone(), weekOffset);
   const [session, schedule] = await Promise.all([auth(), getScheduleData(weekReference, today)]);
 
   if (!schedule) {

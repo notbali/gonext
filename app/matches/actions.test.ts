@@ -69,7 +69,8 @@ describe("createMatch", () => {
     expect(matches[0]).toMatchObject({
       teamId: team.id,
       group: "Scrim",
-      date: new Date("2026-09-14T19:00:00"),
+      // 7:00 PM entered is Eastern time (EDT, UTC-4 in September).
+      date: new Date("2026-09-14T23:00:00Z"),
     });
   });
 });
@@ -99,7 +100,8 @@ describe("updateMatch", () => {
     await updateMatch(match.id, matchFormData({ group: "Ranked", date: "2026-09-15", time: "20:30" }));
 
     const updated = await testDb.match.findUnique({ where: { id: match.id } });
-    expect(updated).toMatchObject({ group: "Ranked", date: new Date("2026-09-15T20:30:00") });
+    // 8:30 PM entered is Eastern time (EDT, UTC-4 in September).
+    expect(updated).toMatchObject({ group: "Ranked", date: new Date("2026-09-16T00:30:00Z") });
   });
 });
 
