@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { easternPartsToUtc } from "@/lib/dates";
 
 async function requireCoach() {
   const session = await auth();
@@ -16,7 +17,11 @@ function parseMatchFields(formData: FormData) {
   if (!group || !dateStr || !timeStr) {
     throw new Error("Group, date, and time are all required.");
   }
-  return { group, date: new Date(`${dateStr}T${timeStr}:00`) };
+  // The date/time inputs are seeded (MatchEditor) and always intended (coaches
+  // schedule matches in the team's own local time) as Eastern time — see lib/dates.ts.
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return { group, date: easternPartsToUtc({ year, month: month - 1, day, hours, minutes }) };
 }
 
 export async function createMatch(formData: FormData) {

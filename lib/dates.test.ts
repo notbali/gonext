@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { chunkIntoWeeks, dateRangeLabel, getLookaheadDates, minutesUntil } from "./dates";
+import { describe, expect, it, vi } from "vitest";
+import {
+  chunkIntoWeeks,
+  dateRangeLabel,
+  easternPartsToUtc,
+  getEasternParts,
+  getLookaheadDates,
+  matchDateLine,
+  minutesUntil,
+  nowInTeamTimezone,
+  shortTimeLabel,
+} from "./dates";
 
 describe("getLookaheadDates", () => {
   it("returns weekCount * 7 consecutive dates starting on the Monday of the reference week", () => {
@@ -59,6 +69,99 @@ describe("minutesUntil", () => {
 
   it("returns a negative number for a date already in the past", () => {
     expect(minutesUntil(new Date(2026, 8, 8, 17, 0, 0), now)).toBe(-60);
+  });
+});
+
+describe("getEasternParts", () => {
+  it("reads Eastern-local day/hour/minute parts from a UTC instant", () => {
+    // 8pm UTC on Sep 8 2026 is 4pm Eastern (EDT, UTC-4) the same day.
+    const parts = getEasternParts(new Date("2026-09-08T20:00:00Z"));
+
+    expect(parts).toEqual({
+      year: 2026,
+      month: 8, // September (0-indexed)
+      day: 8,
+      hours: 16,
+      minutes: 0,
+      dayOfWeek: 2, // Tuesday
+    });
+  });
+
+  it("shows the previous Eastern-local day for a UTC instant just after midnight (the old bug)", () => {
+    // 2:30am UTC on Jan 15 2026 is 9:30pm Eastern (EST, UTC-5) on Jan 14 —
+    // a naive server-local read (UTC) would wrongly report Jan 15/Thursday.
+    const parts = getEasternParts(new Date("2026-01-15T02:30:00Z"));
+
+    expect(parts).toEqual({
+      year: 2026,
+      month: 0, // January
+      day: 14,
+      hours: 21,
+      minutes: 30,
+      dayOfWeek: 3, // Wednesday
+    });
+  });
+});
+
+describe("easternPartsToUtc", () => {
+  it("converts Eastern wall-clock fields entered by a coach (EST, winter) into the correct UTC instant", () => {
+    // A coach types "9:30 PM" meaning Eastern time, on Jan 14 2026 (EST, UTC-5).
+    const result = easternPartsToUtc({ year: 2026, month: 0, day: 14, hours: 21, minutes: 30 });
+
+    expect(result.toISOString()).toBe("2026-01-15T02:30:00.000Z");
+  });
+
+  it("converts Eastern wall-clock fields entered by a coach (EDT, summer) into the correct UTC instant", () => {
+    // A coach types "7:00 PM" meaning Eastern time, on Sep 14 2026 (EDT, UTC-4).
+    const result = easternPartsToUtc({ year: 2026, month: 8, day: 14, hours: 19, minutes: 0 });
+
+    expect(result.toISOString()).toBe("2026-09-14T23:00:00.000Z");
+  });
+
+  it("round-trips with getEasternParts", () => {
+    const parts = { year: 2026, month: 8, day: 14, hours: 19, minutes: 0 };
+    const utc = easternPartsToUtc(parts);
+
+    expect(getEasternParts(utc)).toMatchObject(parts);
+  });
+});
+
+describe("nowInTeamTimezone", () => {
+  it("returns a Date whose local getters reflect Eastern time for the current instant, regardless of the runner's local TZ", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-15T02:30:00Z"));
+
+    try {
+      const result = nowInTeamTimezone();
+
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(0);
+      expect(result.getDate()).toBe(14);
+      expect(result.getHours()).toBe(21);
+      expect(result.getMinutes()).toBe(30);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("matchDateLine", () => {
+  it("labels the match using Eastern time, not the raw UTC/server-local instant", () => {
+    // Same boundary instant as above: 2:30am UTC Jan 15 is 9:30pm Eastern Jan 14.
+    const line = matchDateLine({ date: new Date("2026-01-15T02:30:00Z"), group: "Group A" });
+
+    expect(line).toBe("WED JAN 14 · 9:30 PM ET · Group A");
+  });
+});
+
+describe("shortTimeLabel", () => {
+  it("formats a UTC instant near a day boundary using its Eastern-local time", () => {
+    expect(shortTimeLabel(new Date("2026-01-15T02:30:00Z"))).toBe("9:30P");
+  });
+
+  it("omits minutes on the hour", () => {
+    // 8pm UTC on Sep 8 2026 is 4pm Eastern (EDT).
+    expect(shortTimeLabel(new Date("2026-09-08T20:00:00Z"))).toBe("4P");
   });
 });
 

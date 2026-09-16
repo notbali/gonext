@@ -3,17 +3,19 @@
 import { useState, useTransition } from "react";
 import { updateMatch, deleteMatch } from "@/app/matches/actions";
 import { useToast } from "@/components/ToastProvider";
+import { getEasternParts, type EasternParts } from "@/lib/dates";
 
-function toDateInputValue(d: Date): string {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+/** Seeds the `<input type="date">` default from Eastern time parts (see lib/dates.ts). */
+function toDateInputValue(p: EasternParts): string {
+  const mm = String(p.month + 1).padStart(2, "0");
+  const dd = String(p.day).padStart(2, "0");
+  return `${p.year}-${mm}-${dd}`;
 }
 
-function toTimeInputValue(d: Date): string {
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mi = String(d.getMinutes()).padStart(2, "0");
+/** Seeds the `<input type="time">` default from Eastern time parts (see lib/dates.ts). */
+function toTimeInputValue(p: EasternParts): string {
+  const hh = String(p.hours).padStart(2, "0");
+  const mi = String(p.minutes).padStart(2, "0");
   return `${hh}:${mi}`;
 }
 
@@ -29,6 +31,7 @@ export function MatchEditor({
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { addToast } = useToast();
+  const easternDate = getEasternParts(date);
 
   function reportError(err: unknown) {
     addToast({
@@ -92,14 +95,14 @@ export function MatchEditor({
       <input
         type="date"
         name="date"
-        defaultValue={toDateInputValue(date)}
+        defaultValue={toDateInputValue(easternDate)}
         required
         className="rounded border border-border bg-surface-raised px-2 py-1 text-body text-text-primary"
       />
       <input
         type="time"
         name="time"
-        defaultValue={toTimeInputValue(date)}
+        defaultValue={toTimeInputValue(easternDate)}
         required
         className="rounded border border-border bg-surface-raised px-2 py-1 text-body text-text-primary"
       />
