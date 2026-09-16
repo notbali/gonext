@@ -167,6 +167,21 @@ body {
   }
 }
 
+/* Scheduling: a day column gets a static amber ring once 5+ teammates can make
+   it — a real Match candidate — with the same one-shot sweep on the transition. */
+.day-column-header[data-match-ready] {
+  box-shadow: inset 0 -2px 0 0 var(--color-warning);
+  transition: box-shadow var(--d-state) var(--e-inout);
+}
+.day-column-header[data-sweep-ready]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, rgba(255, 176, 32, 0.28), transparent);
+  animation: gonext-sweep 640ms var(--e-inout);
+  pointer-events: none;
+}
+
 /* Matches list: the only idle loop in the system, because it's the only thing genuinely counting down. */
 .urgency-breathe {
   animation: gonext-breathe 3s var(--e-inout) infinite;
@@ -178,6 +193,21 @@ body {
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* Playoffs: the season's one tournament match gets a more insistent glow than
+   a regular match's urgency-breathe, in the warning/gold accent. */
+.playoffs-glow {
+  animation: gonext-playoffs-glow 2.4s var(--e-inout) infinite;
+}
+@keyframes gonext-playoffs-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(255, 176, 32, 0);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 176, 32, 0.45);
   }
 }
 

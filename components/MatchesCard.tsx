@@ -28,16 +28,24 @@ function MatchItem({
   const confirmed = isThisWeek ? getConfirmedTeammates(match, teammates, weekDates) : [];
   const minutesOut = minutesUntil(match.date, today);
   const isUrgent = minutesOut >= 0 && minutesOut <= URGENCY_WINDOW_MINUTES;
+  const label = match.isPlayoffs ? "PLAYOFFS" : (match.map ?? "MAP TBD");
 
   return (
     <div
       data-testid="match-card"
       data-reveal
+      data-playoffs={match.isPlayoffs ? "" : undefined}
       style={{ transitionDelay: `${index * ENTRANCE_STAGGER_MS}ms` }}
-      className={`relative border-t border-border py-4 pl-3 first:border-t-0 ${isNext ? "accent-wipe" : ""}`}
+      className={`relative border-t border-border py-4 pl-3 first:border-t-0 ${isNext ? "accent-wipe" : ""} ${
+        match.isPlayoffs ? "playoffs-glow" : ""
+      }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-body-lg font-semibold text-text-primary">{matchDateLine(match)}</p>
+        <p
+          className={`text-body-lg font-semibold ${match.isPlayoffs ? "text-warning" : "text-text-primary"}`}
+        >
+          {matchDateLine(match, label)}
+        </p>
         <span
           data-testid="match-countdown"
           data-urgent={isUrgent ? "" : undefined}

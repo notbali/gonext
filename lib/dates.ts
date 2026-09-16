@@ -178,14 +178,16 @@ export function dateRangeLabel(dates: Date[]): string {
   return `${startLabel} — ${endLabel}`;
 }
 
-export function matchDateLine(match: { date: Date; group: string }): string {
+/** `label` is the match's Map name, or "PLAYOFFS" — resolved by the caller, since this
+ * module stays free of map/DB knowledge. */
+export function matchDateLine(match: { date: Date }, label: string): string {
   const p = getEasternParts(match.date);
   const day = DAY_LABELS[(p.dayOfWeek + 6) % 7];
   const month = MONTH_LABELS[p.month];
   const hours12 = ((p.hours + 11) % 12) + 1;
   const meridiem = p.hours < 12 ? "AM" : "PM";
   const minutes = p.minutes.toString().padStart(2, "0");
-  return `${day} ${month} ${p.day} · ${hours12}:${minutes} ${meridiem} ET · ${match.group}`;
+  return `${day} ${month} ${p.day} · ${hours12}:${minutes} ${meridiem} ET · ${label}`;
 }
 
 /** Compact time for tight UI, e.g. "7P" or "7:30P" — in Eastern Time. */

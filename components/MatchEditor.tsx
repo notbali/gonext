@@ -21,12 +21,14 @@ function toTimeInputValue(p: EasternParts): string {
 
 export function MatchEditor({
   matchId,
-  group,
   date,
+  isPlayoffs,
+  map,
 }: {
   matchId: string;
-  group: string;
   date: Date;
+  isPlayoffs: boolean;
+  map: string | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -84,14 +86,8 @@ export function MatchEditor({
           }
         });
       }}
-      className="flex flex-wrap items-center gap-2"
+      className="flex flex-wrap items-center gap-3"
     >
-      <input
-        name="group"
-        defaultValue={group}
-        required
-        className="w-24 rounded border border-border bg-surface-raised px-2 py-1 text-body text-text-primary"
-      />
       <input
         type="date"
         name="date"
@@ -106,6 +102,19 @@ export function MatchEditor({
         required
         className="rounded border border-border bg-surface-raised px-2 py-1 text-body text-text-primary"
       />
+      <label className="flex items-center gap-1.5 font-mono text-caption text-text-dim">
+        <input
+          type="checkbox"
+          name="isPlayoffs"
+          defaultChecked={isPlayoffs}
+          className="h-4 w-4 rounded border-border bg-surface-raised accent-warning"
+        />
+        Playoffs
+      </label>
+      {/* The map is set per-week, not per-match — shown here read-only. */}
+      <span className="font-mono text-caption uppercase tracking-wide text-text-muted">
+        {map ?? "MAP TBD"}
+      </span>
       <button
         type="submit"
         disabled={isPending}

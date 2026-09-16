@@ -24,7 +24,15 @@ export interface Teammate {
 export interface Match {
   id: string;
   date: Date;
-  group: string;
+  isPlayoffs: boolean;
+  /** Resolved from that week's WeekMap. Null for a Playoffs match, or a week with no map set yet. */
+  map: string | null;
   /** False once the match falls outside the displayed week, where no availability has been modeled yet. */
   availabilityCollected: boolean;
+}
+
+export interface WeekMapInfo {
+  /** Monday 00:00 of the week, team-local — see lib/dates.ts's getWeekStart. */
+  weekStart: Date;
+  map: string;
 }

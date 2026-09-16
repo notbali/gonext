@@ -11,7 +11,8 @@ function match(overrides: Partial<Match>): Match {
   return {
     id: "m1",
     date: new Date(2026, 8, 8, 19, 0, 0),
-    group: "Group C",
+    isPlayoffs: false,
+    map: "ASCENT",
     availabilityCollected: true,
     ...overrides,
   };
@@ -69,5 +70,41 @@ describe("MatchesCard entrance", () => {
     cards.forEach((card, i) => {
       expect(card.style.transitionDelay).toBe(`${i * 70}ms`);
     });
+  });
+});
+
+describe("MatchesCard Playoffs styling", () => {
+  it("marks a Playoffs match distinctly for its more prominent styling", () => {
+    const today = new Date(2026, 8, 1);
+    render(
+      <MatchesCard
+        matches={[match({ isPlayoffs: true, map: null })]}
+        teammates={teammates}
+        weekDates={weekDates}
+        today={today}
+      />,
+    );
+    expect(screen.getByTestId("match-card")).toHaveAttribute("data-playoffs");
+  });
+
+  it("does not mark a regular week's match as Playoffs", () => {
+    const today = new Date(2026, 8, 1);
+    render(
+      <MatchesCard matches={[match({})]} teammates={teammates} weekDates={weekDates} today={today} />,
+    );
+    expect(screen.getByTestId("match-card")).not.toHaveAttribute("data-playoffs");
+  });
+
+  it("labels a Playoffs match as PLAYOFFS rather than a map name", () => {
+    const today = new Date(2026, 8, 1);
+    render(
+      <MatchesCard
+        matches={[match({ isPlayoffs: true, map: null })]}
+        teammates={teammates}
+        weekDates={weekDates}
+        today={today}
+      />,
+    );
+    expect(screen.getByText(/PLAYOFFS/)).toBeInTheDocument();
   });
 });

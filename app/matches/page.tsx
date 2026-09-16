@@ -3,10 +3,13 @@ import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
 import { MatchEditor } from "@/components/MatchEditor";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
-import { matchDateLine } from "@/lib/dates";
-import { createMatch } from "@/app/matches/actions";
+import { WeekMapEditor } from "@/components/WeekMapEditor";
+import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
+import { mapForWeek } from "@/lib/week-schedule";
+import { WEEKS_AHEAD } from "@/lib/schedule-data";
+import { createMatch, setWeekMap } from "@/app/matches/actions";
 
-type MatchRow = { id: string; date: Date; group: string };
+type MatchRow = { id: string; date: Date; isPlayoffs: boolean; map: string | null };
 
 function MatchList({
   title,
@@ -23,15 +26,24 @@ function MatchList({
         {title}
       </p>
       <div className="mt-2 flex flex-col gap-2">
-        {matches.map((m) => (
-          <div
-            key={m.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
-          >
-            <p className="text-body-lg font-semibold text-text-primary">{matchDateLine(m)}</p>
-            {isCoach && <MatchEditor matchId={m.id} group={m.group} date={m.date} />}
-          </div>
-        ))}
+        {matches.map((m) => {
+          const label = m.isPlayoffs ? "PLAYOFFS" : (m.map ?? "MAP TBD");
+          return (
+            <div
+              key={m.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
+            >
+              <p
+                className={`text-body-lg font-semibold ${m.isPlayoffs ? "text-warning" : "text-text-primary"}`}
+              >
+                {matchDateLine(m, label)}
+              </p>
+              {isCoach && (
+                <MatchEditor matchId={m.id} date={m.date} isPlayoffs={m.isPlayoffs} map={m.map} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -41,7 +53,7 @@ export default async function MatchesPage() {
   const session = await auth();
 
   const team = await db.team.findFirst({
-    include: { matches: { orderBy: { date: "asc" } } },
+    include: { matches: { orderBy: { date: "asc" } }, weekMaps: true },
   });
 
   if (!team) {
@@ -54,12 +66,27 @@ export default async function MatchesPage() {
 
   const isCoach = session?.isCoach ?? false;
   const now = new Date();
-  const upcoming = team.matches.filter((m) => m.date >= now);
-  const past = team.matches.filter((m) => m.date < now).reverse();
+  const weekMaps = team.weekMaps.map((w) => ({ weekStart: w.weekStart, map: w.map }));
+  const toRow = (m: (typeof team.matches)[number]): MatchRow => ({
+    id: m.id,
+    date: m.date,
+    isPlayoffs: m.isPlayoffs,
+    map: m.isPlayoffs ? null : mapForWeek(weekMaps, m.date),
+  });
+  const upcoming = team.matches.filter((m) => m.date >= now).map(toRow);
+  const past = team.matches
+    .filter((m) => m.date < now)
+    .reverse()
+    .map(toRow);
 
   if (!session?.teammateId) {
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
+
+  const weeks = chunkIntoWeeks(getLookaheadDates(nowInTeamTimezone(), WEEKS_AHEAD)).map((weekDates) => ({
+    weekDates,
+    map: mapForWeek(weekMaps, weekDates[0]),
+  }));
 
   return (
     <div className="min-h-screen bg-bg">
@@ -76,12 +103,8 @@ export default async function MatchesPage() {
         )}
         {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
 
-        {isCoach && (
-          <CreateMatchForm
-            action={createMatch}
-            defaultGroup={team.division.split("·").pop()?.trim() ?? ""}
-          />
-        )}
+        {isCoach && <CreateMatchForm action={createMatch} />}
+        {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
       </div>
     </div>
   );

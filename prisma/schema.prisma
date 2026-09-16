@@ -66,6 +66,7 @@ model Team {
   inviteToken String     @unique @default(cuid())
   teammates   Teammate[]
   matches     Match[]
+  weekMaps    WeekMap[]
 }
 
 model Teammate {
@@ -86,12 +87,46 @@ model Teammate {
 }
 
 model Match {
-  id    String   @id @default(cuid())
-  date  DateTime
-  group String
+  id         String   @id @default(cuid())
+  date       DateTime
+  // The season's single tournament-style match, run as a bracket rather than
+  // on that week's assigned Map — see WeekMap.
+  isPlayoffs Boolean  @default(false)
 
   teamId String
   team   Team   @relation(fields: [teamId], references: [id])
+}
+
+// Riot assigns Premier teams one map per calendar week (Monday-Sunday, team-local);
+// up to two Matches can be played on it that week. A Match's map is always resolved
+// by looking up the WeekMap for the week its date falls in — never stored on the
+// Match itself — the same way "confirmed" is derived from Availability rather than
+// stored.
+model WeekMap {
+  id        String      @id @default(cuid())
+  // Monday 00:00 of the week, team-local — matches lib/dates.ts's getWeekStart.
+  weekStart DateTime
+  map       ValorantMap
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, weekStart])
+}
+
+enum ValorantMap {
+  ASCENT
+  BIND
+  BREEZE
+  FRACTURE
+  HAVEN
+  ICEBOX
+  LOTUS
+  PEARL
+  SPLIT
+  SUNSET
+  ABYSS
+  CORRODE
 }
 
 model Availability {

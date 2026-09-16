@@ -16,7 +16,7 @@ describe("MatchEditor", () => {
     const date = new Date("2026-01-15T02:30:00Z");
     const { container } = render(
       <ToastProvider>
-        <MatchEditor matchId="m1" group="Group A" date={date} />
+        <MatchEditor matchId="m1" date={date} isPlayoffs={false} map="ASCENT" />
       </ToastProvider>,
     );
 
@@ -27,5 +27,43 @@ describe("MatchEditor", () => {
 
     expect(dateInput?.value).toBe("2026-01-14");
     expect(timeInput?.value).toBe("21:30");
+  });
+
+  it("seeds the Playoffs checkbox unchecked for a regular match", () => {
+    const { container } = render(
+      <ToastProvider>
+        <MatchEditor matchId="m1" date={new Date("2026-09-14T19:00:00Z")} isPlayoffs={false} map="ASCENT" />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    const playoffsInput = container.querySelector<HTMLInputElement>('input[name="isPlayoffs"]');
+    expect(playoffsInput?.checked).toBe(false);
+  });
+
+  it("seeds the Playoffs checkbox checked when the match is flagged as Playoffs", () => {
+    const { container } = render(
+      <ToastProvider>
+        <MatchEditor matchId="m1" date={new Date("2026-09-14T19:00:00Z")} isPlayoffs={true} map={null} />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    const playoffsInput = container.querySelector<HTMLInputElement>('input[name="isPlayoffs"]');
+    expect(playoffsInput?.checked).toBe(true);
+  });
+
+  it("shows the resolved map as a read-only label when editing", () => {
+    render(
+      <ToastProvider>
+        <MatchEditor matchId="m1" date={new Date("2026-09-14T19:00:00Z")} isPlayoffs={false} map="BIND" />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(screen.getByText("BIND")).toBeInTheDocument();
   });
 });

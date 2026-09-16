@@ -1,7 +1,8 @@
 import { db as defaultDb } from "@/lib/db";
 import { getLookaheadDates, isSameDate } from "@/lib/dates";
-import type { PrismaClient } from "@/lib/generated/prisma/client";
-import type { AvailabilityStatus, DayAvailability, Match, Teammate } from "@/lib/types";
+import { mapForWeek } from "@/lib/week-schedule";
+import type { Match as PrismaMatch, PrismaClient } from "@/lib/generated/prisma/client";
+import type { AvailabilityStatus, DayAvailability, Match, Teammate, WeekMapInfo } from "@/lib/types";
 
 /** How many calendar weeks ahead the schedule view shows by default. */
 export const WEEKS_AHEAD = 4;
@@ -12,6 +13,14 @@ export interface ScheduleData {
   weekDates: Date[];
   teammates: Teammate[];
   matches: Match[];
+  weekMaps: WeekMapInfo[];
+  /**
+   * The nearest upcoming Playoffs match, surfaced independently of `matches`
+   * (which only carries the next 2 upcoming matches) since Playoffs may be
+   * scheduled well beyond that slice or the lookahead window, but still
+   * needs to render on the home page's weekly-maps panel.
+   */
+  playoffsMatch: Match | null;
 }
 
 /**
@@ -34,6 +43,7 @@ export async function getScheduleData(
         orderBy: { order: "asc" },
       },
       matches: { orderBy: { date: "asc" } },
+      weekMaps: true,
     },
   });
 
@@ -58,15 +68,21 @@ export async function getScheduleData(
   const startOfToday = new Date(today);
   startOfToday.setHours(0, 0, 0, 0);
 
-  const upcomingMatches: Match[] = team.matches
-    .filter((m) => m.date >= startOfToday)
-    .slice(0, 2)
-    .map((m) => ({
+  const weekMaps: WeekMapInfo[] = team.weekMaps.map((w) => ({ weekStart: w.weekStart, map: w.map }));
+
+  function toMatch(m: PrismaMatch): Match {
+    return {
       id: m.id,
       date: m.date,
-      group: m.group,
+      isPlayoffs: m.isPlayoffs,
+      map: m.isPlayoffs ? null : mapForWeek(weekMaps, m.date),
       availabilityCollected: weekDates.some((d) => isSameDate(d, m.date)),
-    }));
+    };
+  }
+
+  const upcoming = team.matches.filter((m) => m.date >= startOfToday);
+  const upcomingMatches = upcoming.slice(0, 2).map(toMatch);
+  const upcomingPlayoffs = upcoming.find((m) => m.isPlayoffs);
 
   return {
     teamName: team.name,
@@ -74,5 +90,7 @@ export async function getScheduleData(
     weekDates,
     teammates,
     matches: upcomingMatches,
+    weekMaps,
+    playoffsMatch: upcomingPlayoffs ? toMatch(upcomingPlayoffs) : null,
   };
 }
