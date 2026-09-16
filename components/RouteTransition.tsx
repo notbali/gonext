@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { LayoutRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { panel } from "@/lib/motion";
@@ -13,13 +13,28 @@ import { panel } from "@/lib/motion";
  * panel silently receives the *new* route's children partway through its
  * exit, mounting the new page once there and again when the real entering
  * panel mounts a moment later — every entrance animation inside plays twice.
- * Freezing the context snapshot each panel was born with stops it from ever
- * seeing a route change while it's still on screen.
+ *
+ * Only the panel that's actually exiting (isPresent === false) gets a frozen
+ * snapshot. The active panel always passes the live context through —
+ * otherwise a same-pathname update (router.refresh() after a save, or a
+ * `?week=N` nav, both of which don't remount this component) would freeze
+ * forever at whatever context existed on first mount, and the page would
+ * stop updating until a full reload.
  */
 function FrozenRouter({ children }: { children: ReactNode }) {
   const context = useContext(LayoutRouterContext);
-  const [frozen] = useState(context);
-  return <LayoutRouterContext.Provider value={frozen}>{children}</LayoutRouterContext.Provider>;
+  const isPresent = useIsPresent();
+  // Track the latest live context while present, so there's something to
+  // fall back to once isPresent flips to false and exit animation starts.
+  const [frozen, setFrozen] = useState(context);
+  if (isPresent && frozen !== context) {
+    setFrozen(context);
+  }
+  return (
+    <LayoutRouterContext.Provider value={isPresent ? context : frozen}>
+      {children}
+    </LayoutRouterContext.Provider>
+  );
 }
 
 /**
