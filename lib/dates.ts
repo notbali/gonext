@@ -119,6 +119,20 @@ export function addWeeks(date: Date, weeks: number): Date {
 }
 
 /**
+ * Parses a `week` search-param value into a validated offset (in weeks) from
+ * the current week. Invalid or non-integer input defaults to 0 (the current
+ * week). The result is clamped so the schedule can never navigate before the
+ * current week, nor further ahead than one `weekCount`-week page past it —
+ * the same `weekCount`-week window already used for the lookahead range (see
+ * `WEEKS_AHEAD` / `getLookaheadDates`).
+ */
+export function parseWeekOffset(raw: string | undefined, weekCount: number): number {
+  const n = Number(raw);
+  const parsed = Number.isInteger(n) ? n : 0;
+  return Math.min(Math.max(parsed, 0), weekCount);
+}
+
+/**
  * Flat, chronological list of dates spanning `weekCount` consecutive calendar
  * weeks (Monday-Sunday each), starting with the week containing `weekReference`.
  */
