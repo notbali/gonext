@@ -31,3 +31,13 @@ describe("AvailabilityGrid first reveal", () => {
     });
   });
 });
+
+describe("AvailabilityGrid mobile scrolling", () => {
+  it("makes the grid horizontally scrollable instead of clipping it", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    const scrollWrapper = screen.getByTestId("availability-grid-scroll");
+    expect(scrollWrapper).not.toHaveClass("overflow-hidden");
+    expect(scrollWrapper).toHaveClass("overflow-x-auto");
+  });
+});

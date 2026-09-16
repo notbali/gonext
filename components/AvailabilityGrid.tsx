@@ -6,6 +6,15 @@ import { GridReveal } from "@/components/GridReveal";
 import { DayColumnHeader } from "@/components/DayColumnHeader";
 import { isColumnFullyAvailable } from "@/lib/schedule-column-state";
 
+// Single source of truth for the grid's column layout, shared by the header
+// row, each teammate row, and the scroll wrapper's minimum width below —
+// keeping them in sync so the grid scrolls (instead of clipping) exactly
+// when its columns would otherwise be squeezed narrower than this.
+const LABEL_COLUMN_WIDTH_PX = 188;
+const DAY_COLUMN_MIN_WIDTH_PX = 96;
+const GRID_TEMPLATE_COLUMNS = `${LABEL_COLUMN_WIDTH_PX}px repeat(7, minmax(${DAY_COLUMN_MIN_WIDTH_PX}px, 1fr))`;
+const GRID_MIN_WIDTH_PX = LABEL_COLUMN_WIDTH_PX + 7 * DAY_COLUMN_MIN_WIDTH_PX;
+
 const CELL_STYLES: Record<DayAvailability["status"], string> = {
   available: "border-primary/30 bg-primary-dim text-primary-bright",
   tentative: "border-warning/30 bg-warning-dim text-warning",
@@ -46,7 +55,7 @@ function WeekSection({
 
   return (
     <div className={isFirst ? "" : "border-t-4 border-bg"}>
-      <div className="grid grid-cols-[188px_repeat(7,1fr)] border-b border-border">
+      <div className="grid border-b border-border" style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}>
         <div className="flex items-center px-4 py-4">
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
             {isFirst ? "Teammate" : weekRangeLabel(weekDates)}
@@ -71,7 +80,8 @@ function WeekSection({
       {teammates.map((teammate) => (
         <div
           key={teammate.id}
-          className="grid grid-cols-[188px_repeat(7,1fr)] border-b border-border last:border-b-0"
+          className="grid border-b border-border last:border-b-0"
+          style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}
         >
           <div className="flex items-center gap-3 px-4 py-4">
             <Avatar name={teammate.name} src={teammate.avatarUrl} size={32} />
@@ -133,18 +143,23 @@ export function AvailabilityGrid({
 
   return (
     <GridReveal>
-      <div className="flex-1 overflow-hidden rounded-lg border border-border bg-surface">
-        {weeks.map((week, weekIndex) => (
-          <WeekSection
-            key={week[0].toISOString()}
-            weekDates={week}
-            dayOffset={weekIndex * 7}
-            teammates={teammates}
-            matches={matches}
-            myTeammateId={myTeammateId}
-            isFirst={weekIndex === 0}
-          />
-        ))}
+      <div
+        data-testid="availability-grid-scroll"
+        className="flex-1 overflow-x-auto rounded-lg border border-border bg-surface"
+      >
+        <div style={{ minWidth: GRID_MIN_WIDTH_PX }}>
+          {weeks.map((week, weekIndex) => (
+            <WeekSection
+              key={week[0].toISOString()}
+              weekDates={week}
+              dayOffset={weekIndex * 7}
+              teammates={teammates}
+              matches={matches}
+              myTeammateId={myTeammateId}
+              isFirst={weekIndex === 0}
+            />
+          ))}
+        </div>
       </div>
     </GridReveal>
   );
