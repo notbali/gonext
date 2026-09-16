@@ -3,6 +3,7 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageHeader } from "@/components/PageHeader";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
+import { AgentShowcase } from "@/components/AgentShowcase";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { addWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
@@ -48,6 +49,7 @@ export default async function SchedulePage({
         />
         <div className="flex w-[340px] shrink-0 flex-col gap-4">
           <LegendCard />
+          <AgentShowcase />
           <MatchesCard
             matches={schedule.matches}
             teammates={schedule.teammates}
