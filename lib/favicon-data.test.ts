@@ -7,7 +7,7 @@ function teammate(id: string, statuses: Teammate["week"][number]["status"][]): T
 }
 
 function match(id: string, date: Date): Match {
-  return { id, date, group: "Group C", availabilityCollected: true };
+  return { id, date, isPlayoffs: false, map: "ASCENT", availabilityCollected: true };
 }
 
 describe("getFaviconSignals", () => {

@@ -71,7 +71,7 @@ describe("getScheduleData", () => {
     await makeTeammate(team.id, "Alice");
     // Third displayed week: falls outside a single-week view but inside the lookahead.
     await testDb.match.create({
-      data: { teamId: team.id, date: new Date(2026, 8, 16, 19), group: "Group A" },
+      data: { teamId: team.id, date: new Date(2026, 8, 16, 19) },
     });
 
     const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
@@ -84,11 +84,92 @@ describe("getScheduleData", () => {
     const team = await makeTeam();
     await makeTeammate(team.id, "Alice");
     await testDb.match.create({
-      data: { teamId: team.id, date: new Date(2026, 10, 1, 19), group: "Group A" }, // Nov 1, well past WEEKS_AHEAD
+      data: { teamId: team.id, date: new Date(2026, 10, 1, 19) }, // Nov 1, well past WEEKS_AHEAD
     });
 
     const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
 
     expect(schedule!.matches[0].availabilityCollected).toBe(false);
+  });
+
+  it("resolves a match's map from the WeekMap covering the week its date falls in", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    // Third displayed week: Mon Sep 14 2026.
+    await testDb.weekMap.create({
+      data: { teamId: team.id, weekStart: new Date(2026, 8, 14), map: "BIND" },
+    });
+    await testDb.match.create({
+      data: { teamId: team.id, date: new Date(2026, 8, 16, 19) },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.matches[0].map).toBe("BIND");
+  });
+
+  it("resolves a match's map to null when no WeekMap is set for its week", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    await testDb.match.create({
+      data: { teamId: team.id, date: new Date(2026, 8, 16, 19) },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.matches[0].map).toBeNull();
+  });
+
+  it("resolves a Playoffs match's map as null even when its week has a WeekMap", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    await testDb.weekMap.create({
+      data: { teamId: team.id, weekStart: new Date(2026, 8, 14), map: "BIND" },
+    });
+    await testDb.match.create({
+      data: { teamId: team.id, date: new Date(2026, 8, 16, 19), isPlayoffs: true },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.matches[0]).toMatchObject({ isPlayoffs: true, map: null });
+  });
+
+  it("surfaces an upcoming Playoffs match separately even when it falls beyond the lookahead window", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    await testDb.match.create({
+      data: { teamId: team.id, date: new Date(2026, 10, 1, 19), isPlayoffs: true }, // Nov 1, past WEEKS_AHEAD
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.playoffsMatch).toMatchObject({ isPlayoffs: true });
+  });
+
+  it("surfaces an upcoming Playoffs match separately even when two nearer matches fill the normal slice", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    await testDb.match.create({ data: { teamId: team.id, date: new Date(2026, 8, 8, 19) } });
+    await testDb.match.create({ data: { teamId: team.id, date: new Date(2026, 8, 9, 19) } });
+    await testDb.match.create({
+      data: { teamId: team.id, date: new Date(2026, 8, 10, 19), isPlayoffs: true },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.matches).toHaveLength(2);
+    expect(schedule!.matches.some((m) => m.isPlayoffs)).toBe(false);
+    expect(schedule!.playoffsMatch).toMatchObject({ isPlayoffs: true });
+  });
+
+  it("leaves playoffsMatch null when there is no upcoming Playoffs match", async () => {
+    const team = await makeTeam();
+    await makeTeammate(team.id, "Alice");
+    await testDb.match.create({ data: { teamId: team.id, date: new Date(2026, 8, 8, 19) } });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.playoffsMatch).toBeNull();
   });
 });

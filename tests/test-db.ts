@@ -13,6 +13,7 @@ export const testDb = new PrismaClient({ adapter });
 export async function resetTestDb() {
   await testDb.availability.deleteMany();
   await testDb.match.deleteMany();
+  await testDb.weekMap.deleteMany();
   await testDb.teammate.deleteMany();
   await testDb.team.deleteMany();
   await testDb.session.deleteMany();

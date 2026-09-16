@@ -186,9 +186,9 @@ describe("nowInTeamTimezone", () => {
 describe("matchDateLine", () => {
   it("labels the match using Eastern time, not the raw UTC/server-local instant", () => {
     // Same boundary instant as above: 2:30am UTC Jan 15 is 9:30pm Eastern Jan 14.
-    const line = matchDateLine({ date: new Date("2026-01-15T02:30:00Z"), group: "Group A" });
+    const line = matchDateLine({ date: new Date("2026-01-15T02:30:00Z") }, "ASCENT");
 
-    expect(line).toBe("WED JAN 14 · 9:30 PM ET · Group A");
+    expect(line).toBe("WED JAN 14 · 9:30 PM ET · ASCENT");
   });
 });
 

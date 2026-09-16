@@ -3,10 +3,11 @@ import { AccessGate } from "@/components/AccessGate";
 import { PageHeader } from "@/components/PageHeader";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
-import { AgentShowcase } from "@/components/AgentShowcase";
+import { WeeklyMapsPanel } from "@/components/WeeklyMapsPanel";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
-import { addWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
+import { addWeeks, chunkIntoWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
+import { mapForWeek } from "@/lib/week-schedule";
 
 export default async function SchedulePage({
   searchParams,
@@ -32,6 +33,11 @@ export default async function SchedulePage({
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
+  const weeks = chunkIntoWeeks(schedule.weekDates).map((weekDates) => ({
+    weekDates,
+    map: mapForWeek(schedule.weekMaps, weekDates[0]),
+  }));
+
   return (
     <div className="min-h-screen bg-bg">
       <PageHeader
@@ -49,7 +55,7 @@ export default async function SchedulePage({
         />
         <div className="flex w-[340px] shrink-0 flex-col gap-4">
           <LegendCard />
-          <AgentShowcase />
+          <WeeklyMapsPanel weeks={weeks} playoffsMatch={schedule.playoffsMatch} />
           <MatchesCard
             matches={schedule.matches}
             teammates={schedule.teammates}

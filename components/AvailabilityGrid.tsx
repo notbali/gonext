@@ -4,7 +4,7 @@ import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
 import { DayColumnHeader } from "@/components/DayColumnHeader";
-import { isColumnFullyAvailable } from "@/lib/schedule-column-state";
+import { isColumnFullyAvailable, isDayMatchReady } from "@/lib/schedule-column-state";
 
 // Single source of truth for the grid's column layout, shared by the header
 // row, each teammate row, and the scroll wrapper's minimum width below —
@@ -71,6 +71,7 @@ function WeekSection({
               matchLabel={match ? shortTimeLabel(match.date) : undefined}
               hasMatch={Boolean(match)}
               complete={isColumnFullyAvailable(teammates, dayOffset + i)}
+              matchReady={isDayMatchReady(teammates, dayOffset + i)}
               revealDelayMs={i * 45}
             />
           );

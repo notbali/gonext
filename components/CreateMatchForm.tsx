@@ -5,10 +5,8 @@ import { useToast } from "@/components/ToastProvider";
 
 export function CreateMatchForm({
   action,
-  defaultGroup,
 }: {
   action: (formData: FormData) => Promise<void>;
-  defaultGroup: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const { addToast } = useToast();
@@ -37,19 +35,6 @@ export function CreateMatchForm({
       onSubmit={handleSubmit}
       className="mt-8 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface p-4"
     >
-      <div className="w-28">
-        <label htmlFor="match-group" className="block font-mono text-caption text-text-dim">
-          Group
-        </label>
-        <input
-          id="match-group"
-          name="group"
-          required
-          disabled={isPending}
-          defaultValue={defaultGroup}
-          className="mt-1 w-full rounded border border-border bg-surface-raised px-2 py-1.5 text-body text-text-primary disabled:opacity-60"
-        />
-      </div>
       <div>
         <label htmlFor="match-date" className="block font-mono text-caption text-text-dim">
           Date
@@ -76,6 +61,19 @@ export function CreateMatchForm({
           className="mt-1 rounded border border-border bg-surface-raised px-2 py-1.5 text-body text-text-primary disabled:opacity-60"
         />
       </div>
+      <label
+        htmlFor="match-playoffs"
+        className="flex items-center gap-2 pb-1.5 font-mono text-caption text-text-dim"
+      >
+        <input
+          id="match-playoffs"
+          type="checkbox"
+          name="isPlayoffs"
+          disabled={isPending}
+          className="h-4 w-4 rounded border-border bg-surface-raised accent-warning disabled:opacity-60"
+        />
+        Playoffs match
+      </label>
       <button
         type="submit"
         disabled={isPending}

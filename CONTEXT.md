@@ -25,8 +25,16 @@ A Teammate's state for a single day: `Available`, `Tentative`, `Unavailable`, or
 _Avoid_: Status (too generic on its own)
 
 **Match**:
-A scheduled Premier match window on the team's calendar — a date, time, and Group. Premier queues teams against each other within a match window rather than fixing opponents in advance, so a Match never has a known opponent ahead of time; it isn't modeled.
-_Avoid_: Fixture, opponent (there is no pre-set opponent field)
+A scheduled Premier match window on the team's calendar — a date and time. Premier queues teams against each other within a match window rather than fixing opponents in advance, so a Match never has a known opponent ahead of time; it isn't modeled. Its Map is derived from the Week it falls in, except a Match flagged Playoffs, which has none.
+_Avoid_: Fixture, opponent (there is no pre-set opponent field), Group (the old per-match text label this replaced)
+
+**Week**:
+The Monday–Sunday scheduling unit Riot assigns a single Map to; a Coach sets that Map, and up to two Matches can be played on it that week.
+_Avoid_: Round, cycle
+
+**Playoffs**:
+The season's single tournament-style Match, run as a bracket rather than on a Week's assigned Map. A Match is flagged Playoffs rather than Playoffs being tracked separately, and it's exempt from the two-Matches-per-week cap.
+_Avoid_: Finals (Playoffs may be more than one bracket round; the flag doesn't distinguish them)
 
 **Confirmed**:
 A Teammate counts as confirmed for a Match when their Availability on the Match's date is `Available` and, if a time range is set, that range covers the Match's start time. Confirmed is always derived from Availability — never stored as its own field.

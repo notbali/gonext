@@ -18,6 +18,7 @@ async function main() {
   });
 
   const weekDates = getWeekDates(new Date());
+  const thisWeekStart = new Date(weekDates[0]); // Monday of the displayed week
 
   const thisWeekMatch = new Date(weekDates[3]); // Thursday of the displayed week
   thisWeekMatch.setHours(19, 0, 0, 0);
@@ -29,9 +30,15 @@ async function main() {
   await db.match.deleteMany({ where: { teamId: team.id } });
   await db.match.createMany({
     data: [
-      { date: thisWeekMatch, group: "GROUP C", teamId: team.id },
-      { date: nextWeekMatch, group: "GROUP C", teamId: team.id },
+      { date: thisWeekMatch, teamId: team.id },
+      { date: nextWeekMatch, teamId: team.id },
     ],
+  });
+
+  await db.weekMap.upsert({
+    where: { teamId_weekStart: { teamId: team.id, weekStart: thisWeekStart } },
+    update: { map: "ASCENT" },
+    create: { teamId: team.id, weekStart: thisWeekStart, map: "ASCENT" },
   });
 
   console.log(`Seeded team "${team.name}". Invite link token: ${team.inviteToken}`);
