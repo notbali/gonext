@@ -28,15 +28,22 @@ export function SetAvailabilityButton({
     startTransition(async () => {
       try {
         await setWeekAvailability(teammateId, dateISOs, status, timeRange || null);
-        router.refresh();
-        addToast({ message: `Availability set for ${rangeLabel}.`, variant: "success" });
-        setIsOpen(false);
       } catch (err) {
         addToast({
           message: err instanceof Error ? err.message : "Something went wrong.",
           variant: "error",
         });
+        return;
       }
+      // The write already succeeded, so a failure here must not be reported
+      // as a save failure — best-effort only.
+      try {
+        router.refresh();
+      } catch {
+        // ignore
+      }
+      addToast({ message: `Availability set for ${rangeLabel}.`, variant: "success" });
+      setIsOpen(false);
     });
   }
 

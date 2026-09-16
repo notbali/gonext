@@ -73,8 +73,6 @@ export function EditableCell({
           nextStatus,
           nextStatus === "available" ? nextRange || null : null,
         );
-        router.refresh();
-        setLockState("committed");
       } catch (err) {
         setLocalStatus(prevStatus);
         setLocalRange(prevRange);
@@ -83,7 +81,16 @@ export function EditableCell({
           message: err instanceof Error ? err.message : "Couldn't save that change.",
           variant: "error",
         });
+        return;
       }
+      // The write already succeeded, so a failure here must not be reported
+      // as a save failure — best-effort only.
+      try {
+        router.refresh();
+      } catch {
+        // ignore
+      }
+      setLockState("committed");
     });
   }
 
