@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability } from "@/app/actions";
 import { useToast } from "@/components/ToastProvider";
@@ -37,6 +38,7 @@ export function EditableCell({
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
+  const router = useRouter();
 
   // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
   // revalidates and this cell re-renders with new props. Skipped while a save
@@ -71,6 +73,7 @@ export function EditableCell({
           nextStatus,
           nextStatus === "available" ? nextRange || null : null,
         );
+        router.refresh();
         setLockState("committed");
       } catch (err) {
         setLocalStatus(prevStatus);

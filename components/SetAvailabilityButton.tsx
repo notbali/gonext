@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { setWeekAvailability } from "@/app/actions";
 import { Modal } from "@/components/Modal";
@@ -21,11 +22,13 @@ export function SetAvailabilityButton({
   const [isPending, startTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { addToast } = useToast();
+  const router = useRouter();
 
   function apply() {
     startTransition(async () => {
       try {
         await setWeekAvailability(teammateId, dateISOs, status, timeRange || null);
+        router.refresh();
         addToast({ message: `Availability set for ${rangeLabel}.`, variant: "success" });
         setIsOpen(false);
       } catch (err) {
