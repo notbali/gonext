@@ -5,12 +5,7 @@ import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
-import { addWeeks } from "@/lib/dates";
-
-function parseWeekOffset(raw: string | undefined): number {
-  const n = Number(raw);
-  return Number.isInteger(n) ? n : 0;
-}
+import { addWeeks, parseWeekOffset } from "@/lib/dates";
 
 export default async function SchedulePage({
   searchParams,
@@ -18,7 +13,7 @@ export default async function SchedulePage({
   searchParams: Promise<{ week?: string }>;
 }) {
   const { week } = await searchParams;
-  const weekOffset = parseWeekOffset(week);
+  const weekOffset = parseWeekOffset(week, WEEKS_AHEAD);
   const today = new Date();
   const weekReference = addWeeks(today, weekOffset);
   const [session, schedule] = await Promise.all([auth(), getScheduleData(weekReference, today)]);

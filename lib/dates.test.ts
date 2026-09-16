@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkIntoWeeks, dateRangeLabel, getLookaheadDates, minutesUntil } from "./dates";
+import { chunkIntoWeeks, dateRangeLabel, getLookaheadDates, minutesUntil, parseWeekOffset } from "./dates";
 
 describe("getLookaheadDates", () => {
   it("returns weekCount * 7 consecutive dates starting on the Monday of the reference week", () => {
@@ -59,6 +59,43 @@ describe("minutesUntil", () => {
 
   it("returns a negative number for a date already in the past", () => {
     expect(minutesUntil(new Date(2026, 8, 8, 17, 0, 0), now)).toBe(-60);
+  });
+});
+
+describe("parseWeekOffset", () => {
+  const weekCount = 4;
+
+  it("passes through a valid in-range offset unchanged", () => {
+    expect(parseWeekOffset("2", weekCount)).toBe(2);
+  });
+
+  it("defaults to 0 for undefined", () => {
+    expect(parseWeekOffset(undefined, weekCount)).toBe(0);
+  });
+
+  it("defaults to 0 for non-numeric garbage", () => {
+    expect(parseWeekOffset("banana", weekCount)).toBe(0);
+  });
+
+  it("defaults to 0 for a non-integer value", () => {
+    expect(parseWeekOffset("2.5", weekCount)).toBe(0);
+  });
+
+  it("clamps a very large positive offset down to weekCount", () => {
+    expect(parseWeekOffset("999999", weekCount)).toBe(weekCount);
+  });
+
+  it("clamps a very large negative offset up to 0", () => {
+    expect(parseWeekOffset("-999999", weekCount)).toBe(0);
+  });
+
+  it("allows exactly weekCount weeks ahead but no further", () => {
+    expect(parseWeekOffset(String(weekCount), weekCount)).toBe(weekCount);
+    expect(parseWeekOffset(String(weekCount + 1), weekCount)).toBe(weekCount);
+  });
+
+  it("never returns a negative offset", () => {
+    expect(parseWeekOffset("-1", weekCount)).toBe(0);
   });
 });
 

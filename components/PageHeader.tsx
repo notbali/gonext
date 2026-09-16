@@ -1,6 +1,42 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { dateRangeLabel } from "@/lib/dates";
 import { SetAvailabilityButton } from "@/components/SetAvailabilityButton";
+
+/** A week-nav arrow: a link when navigable, a disabled marker at a boundary. */
+function NavArrow({
+  disabled,
+  href,
+  label,
+  children,
+}: {
+  disabled: boolean;
+  href: string;
+  label: string;
+  children: ReactNode;
+}) {
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        aria-label={label}
+        className="cursor-not-allowed rounded px-2 py-1.5 text-text-dim opacity-40"
+      >
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function PageHeader({
   weekDates,
@@ -14,6 +50,8 @@ export function PageHeader({
   myTeammateId: string;
 }) {
   const isCurrentRange = weekOffset === 0;
+  const isAtEarliest = weekOffset <= 0;
+  const isAtLatest = weekOffset >= weekCount;
   const rangeLabel = dateRangeLabel(weekDates);
 
   return (
@@ -29,13 +67,13 @@ export function PageHeader({
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1 rounded-md border border-border bg-surface px-1 py-1 text-text-dim">
-          <Link
+          <NavArrow
+            disabled={isAtEarliest}
             href={`/?week=${weekOffset - weekCount}`}
-            aria-label={`Previous ${weekCount} weeks`}
-            className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+            label={`Previous ${weekCount} weeks`}
           >
             ‹
-          </Link>
+          </NavArrow>
           {isCurrentRange ? (
             <span className="px-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted">
               This week
@@ -48,13 +86,13 @@ export function PageHeader({
               This week
             </Link>
           )}
-          <Link
+          <NavArrow
+            disabled={isAtLatest}
             href={`/?week=${weekOffset + weekCount}`}
-            aria-label={`Next ${weekCount} weeks`}
-            className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+            label={`Next ${weekCount} weeks`}
           >
             ›
-          </Link>
+          </NavArrow>
         </div>
         <SetAvailabilityButton
           teammateId={myTeammateId}
