@@ -1,10 +1,16 @@
-import type { DayAvailability, Match, Teammate } from "@/lib/types";
+import Image from "next/image";
+import type { DayAvailability, Match, Teammate, WeekMapInfo } from "@/lib/types";
 import { chunkIntoWeeks, dayOfWeekLabel, isSameDate, shortTimeLabel, weekRangeLabel } from "@/lib/dates";
 import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
 import { DayColumnHeader } from "@/components/DayColumnHeader";
 import { isColumnFullyAvailable, isDayMatchReady } from "@/lib/schedule-column-state";
+import { mapForWeek } from "@/lib/week-schedule";
+import { mapImageSrc } from "@/lib/valorant-maps";
+
+const WEEK_MAP_REVEAL_CLASS =
+  "grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-[var(--d-state)] ease-[var(--e-out)] group-hover:grid-rows-[1fr]";
 
 // Single source of truth for the grid's column layout, shared by the header
 // row, each teammate row, and the scroll wrapper's minimum width below —
@@ -43,6 +49,7 @@ function WeekSection({
   matches,
   myTeammateId,
   isFirst,
+  map,
 }: {
   weekDates: Date[];
   dayOffset: number;
@@ -50,11 +57,29 @@ function WeekSection({
   matches: Match[];
   myTeammateId?: string | null;
   isFirst: boolean;
+  map: string | null;
 }) {
   const matchByDay = weekDates.map((date) => matches.find((m) => isSameDate(m.date, date)));
+  const src = map ? mapImageSrc(map) : null;
 
   return (
-    <div className={isFirst ? "" : "border-t-4 border-bg"}>
+    <div className={`group ${isFirst ? "" : "border-t-4 border-bg"}`}>
+      <div data-testid="week-map-reveal" className={WEEK_MAP_REVEAL_CLASS}>
+        <div className="overflow-hidden">
+          <div className="relative h-40 w-full overflow-hidden bg-surface-raised">
+            {src ? (
+              <Image src={src} alt={map!} fill sizes="900px" className="object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <span className="font-mono text-caption font-semibold uppercase tracking-wide text-text-dim">
+                  MAP TBD
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="grid border-b border-border" style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}>
         <div className="flex items-center px-4 py-4">
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
@@ -134,11 +159,13 @@ export function AvailabilityGrid({
   teammates,
   matches,
   myTeammateId,
+  weekMaps = [],
 }: {
   weekDates: Date[];
   teammates: Teammate[];
   matches: Match[];
   myTeammateId?: string | null;
+  weekMaps?: WeekMapInfo[];
 }) {
   const weeks = chunkIntoWeeks(weekDates);
 
@@ -158,6 +185,7 @@ export function AvailabilityGrid({
               matches={matches}
               myTeammateId={myTeammateId}
               isFirst={weekIndex === 0}
+              map={mapForWeek(weekMaps, week[0])}
             />
           ))}
         </div>

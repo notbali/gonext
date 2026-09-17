@@ -32,7 +32,7 @@ const MAP_IMAGE_FILENAMES: Record<ValorantMapName, string> = {
   CORRODE: "corrode.png",
 };
 
-/** The static artwork for `map`, shown when hovering its week in the schedule sidebar. Null for
+/** The static artwork for `map`, shown when hovering its week in the schedule calendar. Null for
  * anything that isn't a known map (there's no artwork to fall back to). */
 export function mapImageSrc(map: string): string | null {
   const filename = (MAP_IMAGE_FILENAMES as Record<string, string>)[map];
