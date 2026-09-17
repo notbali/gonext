@@ -74,3 +74,85 @@ describe("AvailabilityGrid mobile scrolling", () => {
     expect(scrollWrapper).toHaveClass("overflow-x-auto");
   });
 });
+
+describe("AvailabilityGrid weekly map hover-reveal", () => {
+  it("renders a collapsed map reveal above each week's header, one per week", () => {
+    const week2Dates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 21 + i));
+    const twoWeekTeammates: Teammate[] = [
+      {
+        id: "t1",
+        name: "Alice",
+        avatarUrl: null,
+        week: [...weekDates, ...week2Dates].map(() => ({ status: "not-set" as const })),
+      },
+    ];
+    render(
+      <AvailabilityGrid
+        weekDates={[...weekDates, ...week2Dates]}
+        teammates={twoWeekTeammates}
+        matches={[]}
+        weekMaps={[
+          { weekStart: weekDates[0], map: "ASCENT" },
+          { weekStart: week2Dates[0], map: "BIND" },
+        ]}
+      />,
+    );
+
+    const reveals = screen.getAllByTestId("week-map-reveal");
+    expect(reveals).toHaveLength(2);
+    reveals.forEach((reveal) => {
+      expect(reveal).toHaveClass("grid-rows-[0fr]");
+      expect(reveal).toHaveClass("group-hover:grid-rows-[1fr]");
+      expect(reveal).toHaveClass("overflow-hidden");
+    });
+
+    expect(screen.getByAltText("ASCENT")).toBeInTheDocument();
+    expect(screen.getByAltText("BIND")).toBeInTheDocument();
+  });
+
+  it("shows a MAP TBD placeholder, still hover-gated, for a week with no map assigned", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} weekMaps={[]} />);
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    const reveal = screen.getByTestId("week-map-reveal");
+    expect(reveal).toHaveClass("grid-rows-[0fr]");
+    expect(reveal).toHaveTextContent("MAP TBD");
+  });
+
+  it("positions the reveal above the week's day headers so expanding it pushes the calendar down", () => {
+    render(
+      <AvailabilityGrid
+        weekDates={weekDates}
+        teammates={teammates}
+        matches={[]}
+        weekMaps={[{ weekStart: weekDates[0], map: "ASCENT" }]}
+      />,
+    );
+
+    const reveal = screen.getByTestId("week-map-reveal");
+    const firstHeaderCell = screen.getAllByTestId("grid-column-header")[0];
+    expect(reveal.compareDocumentPosition(firstHeaderCell)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("animates the reveal's height with the state-duration easing so it reads as the calendar morphing, not a snap", () => {
+    render(
+      <AvailabilityGrid
+        weekDates={weekDates}
+        teammates={teammates}
+        matches={[]}
+        weekMaps={[{ weekStart: weekDates[0], map: "ASCENT" }]}
+      />,
+    );
+
+    const reveal = screen.getByTestId("week-map-reveal");
+    expect(reveal).toHaveClass("transition-[grid-template-rows]");
+    expect(reveal).toHaveClass("duration-[var(--d-state)]");
+    expect(reveal).toHaveClass("ease-[var(--e-out)]");
+  });
+
+  it("defaults to no maps assigned when weekMaps is omitted", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    expect(screen.getByTestId("week-map-reveal")).toHaveTextContent("MAP TBD");
+  });
+});
