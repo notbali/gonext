@@ -59,6 +59,8 @@ type DecryptedTextProps = {
   clickMode?: "once" | "toggle";
   /** Whether the text should be decrypted; only applies when animateOn is "controlled". */
   active?: boolean;
+  /** ms to wait after `active` turns true before decrypting starts (encrypting is never delayed); only applies when animateOn is "controlled". */
+  decryptDelay?: number;
 } & Omit<HTMLMotionProps<"span">, "className" | "children">;
 
 export default function DecryptedText({
@@ -75,6 +77,7 @@ export default function DecryptedText({
   animateOn = "hover",
   clickMode = "once",
   active = false,
+  decryptDelay = 0,
   ...props
 }: DecryptedTextProps) {
   // Starts as the real text so server-rendered HTML (and no-JS) is readable and there's no random
@@ -93,6 +96,9 @@ export default function DecryptedText({
   const revealedRef = useRef<Set<number>>(new Set());
   // The `active` value the animation was last started for (or mounted with), so re-renders don't re-trigger it.
   const lastActiveRef = useRef(active);
+  const decryptTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Latest `triggerDecrypt`, so a delayed decrypt isn't cancelled (or run stale) when its identity changes mid-wait.
+  const triggerDecryptRef = useRef<() => void>(() => {});
 
   const applyRevealed = useCallback((next: Set<number>) => {
     revealedRef.current = next;
@@ -169,6 +175,8 @@ export default function DecryptedText({
   }, [isAnimating, applyRevealed]);
 
   const triggerReverse = useCallback(() => {
+    // Already fully encrypted (e.g. a delayed decrypt was dropped before it began): nothing to do.
+    if (!isDecrypted && !isAnimating) return;
     // Interrupting a decrypt: encrypt from what's revealed so far rather than flashing the full text.
     const start = isDecrypted && !isAnimating ? fillAllIndices() : revealedRef.current;
     applyRevealed(start);
@@ -340,15 +348,24 @@ export default function DecryptedText({
   useEffect(() => {
     if (animateOn !== "controlled" || lastActiveRef.current === active) return;
     lastActiveRef.current = active;
+    clearTimeout(decryptTimeoutRef.current);
     // A change in `active` is the trigger event itself, so starting the animation here is the point of the effect.
     /* eslint-disable react-hooks/set-state-in-effect */
-    if (active) {
-      triggerDecrypt();
-    } else {
+    if (!active) {
       triggerReverse();
+    } else if (decryptDelay > 0) {
+      decryptTimeoutRef.current = setTimeout(() => triggerDecryptRef.current(), decryptDelay);
+    } else {
+      triggerDecrypt();
     }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [animateOn, active, triggerDecrypt, triggerReverse]);
+  }, [animateOn, active, decryptDelay, triggerDecrypt, triggerReverse]);
+
+  useEffect(() => {
+    triggerDecryptRef.current = triggerDecrypt;
+  }, [triggerDecrypt]);
+
+  useEffect(() => () => clearTimeout(decryptTimeoutRef.current), []);
 
   const animateProps = reducedMotion
     ? {}
