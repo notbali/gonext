@@ -1,12 +1,26 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { AvailabilityGrid } from "./AvailabilityGrid";
 import type { Teammate } from "@/lib/types";
+import { VALORANT_MAPS } from "@/lib/valorant-maps";
 
 vi.mock("@/app/actions", () => ({
   updateAvailability: vi.fn().mockResolvedValue(undefined),
 }));
+
+// The map labels honour prefers-reduced-motion, and jsdom has no matchMedia.
+beforeEach(() => {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+  );
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 const weekDates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 14 + i));
 
@@ -200,6 +214,110 @@ describe("AvailabilityGrid weekly map hover-reveal", () => {
     render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
 
     expect(screen.getByTestId("week-map-reveal")).toHaveTextContent("MAP TBD");
+  });
+});
+
+describe("AvailabilityGrid weekly map name decryption", () => {
+  const week2Dates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 21 + i));
+  const twoWeekTeammates: Teammate[] = [
+    {
+      id: "t1",
+      name: "Alice",
+      avatarUrl: null,
+      week: [...weekDates, ...week2Dates].map(() => ({ status: "not-set" as const })),
+    },
+  ];
+
+  /** What a sighted user reads in a week's map label: the aria-hidden, possibly-scrambled layer. */
+  function visibleLabel(reveal: HTMLElement): string {
+    return within(reveal).getByTestId("map-label").querySelector('[aria-hidden="true"]')!.textContent ?? "";
+  }
+
+  function settle() {
+    // Comfortably longer than the slowest map name takes to (de|en)crypt.
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+  }
+
+  it.each(VALORANT_MAPS)("shows %s scrambled at rest, decrypts it when its week is hovered, and re-scrambles it on leave", (map) => {
+    vi.useFakeTimers();
+    render(
+      <AvailabilityGrid
+        weekDates={weekDates}
+        teammates={teammates}
+        matches={[]}
+        weekMaps={[{ weekStart: weekDates[0], map }]}
+      />,
+    );
+    const reveal = screen.getByTestId("week-map-reveal");
+    const week = screen.getByTestId("week-section");
+    expect(within(reveal).getByText(map)).toBeInTheDocument(); // readable to screen readers throughout
+    expect(visibleLabel(reveal)).not.toBe(map);
+    expect(visibleLabel(reveal)).toHaveLength(map.length);
+
+    fireEvent.mouseEnter(week);
+    settle();
+    expect(visibleLabel(reveal)).toBe(map);
+
+    fireEvent.mouseLeave(week);
+    settle();
+    expect(visibleLabel(reveal)).not.toBe(map);
+    expect(visibleLabel(reveal)).toHaveLength(map.length);
+  });
+
+  it("decrypts the MAP TBD placeholder along with a real map name", () => {
+    vi.useFakeTimers();
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} weekMaps={[]} />);
+    const reveal = screen.getByTestId("week-map-reveal");
+    expect(visibleLabel(reveal)).not.toBe("MAP TBD");
+
+    fireEvent.mouseEnter(screen.getByTestId("week-section"));
+    settle();
+
+    expect(visibleLabel(reveal)).toBe("MAP TBD");
+  });
+
+  it("only decrypts the label of the week being hovered", () => {
+    vi.useFakeTimers();
+    render(
+      <AvailabilityGrid
+        weekDates={[...weekDates, ...week2Dates]}
+        teammates={twoWeekTeammates}
+        matches={[]}
+        weekMaps={[
+          { weekStart: weekDates[0], map: "ASCENT" },
+          { weekStart: week2Dates[0], map: "BIND" },
+        ]}
+      />,
+    );
+    const [week1Reveal, week2Reveal] = screen.getAllByTestId("week-map-reveal");
+    const [week1, week2] = screen.getAllByTestId("week-section");
+
+    fireEvent.mouseEnter(week2);
+    settle();
+    expect(visibleLabel(week2Reveal)).toBe("BIND");
+    expect(visibleLabel(week1Reveal)).not.toBe("ASCENT");
+
+    fireEvent.mouseLeave(week2);
+    fireEvent.mouseEnter(week1);
+    settle();
+    expect(visibleLabel(week1Reveal)).toBe("ASCENT");
+    expect(visibleLabel(week2Reveal)).not.toBe("BIND");
+  });
+
+  it("puts the label over the map artwork, inside the collapsing reveal", () => {
+    render(
+      <AvailabilityGrid
+        weekDates={weekDates}
+        teammates={teammates}
+        matches={[]}
+        weekMaps={[{ weekStart: weekDates[0], map: "ASCENT" }]}
+      />,
+    );
+
+    const reveal = screen.getByTestId("week-map-reveal");
+    expect(reveal).toContainElement(screen.getByTestId("map-label"));
   });
 });
 
