@@ -234,10 +234,13 @@ describe("AvailabilityGrid weekly map name decryption", () => {
   }
 
   function settle() {
-    // Comfortably longer than the slowest map name takes to (de|en)crypt.
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
+    // Comfortably longer than the reveal's slide-open plus the slowest map name's decrypt. Advanced in steps because
+    // React only starts the next timer-driven phase (delay -> animation) between renders, as in real time.
+    for (let i = 0; i < 20; i++) {
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+    }
   }
 
   it.each(VALORANT_MAPS)("shows %s scrambled at rest, decrypts it when its week is hovered, and re-scrambles it on leave", (map) => {

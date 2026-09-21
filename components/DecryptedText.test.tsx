@@ -138,6 +138,66 @@ describe("DecryptedText (controlled)", () => {
     expect(visibleText(container)).toBe("ASCENT");
   });
 
+  it("waits out decryptDelay before it starts decrypting, staying scrambled meanwhile", () => {
+    const { container, rerender } = render(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active />);
+    tick(199);
+    expect(visibleText(container)).toBe("######");
+
+    tick(1); // the delay elapses and decrypting starts (React renders between timer callbacks in real time)
+    tick(SPEED);
+    expect(visibleText(container)).toBe("A#####");
+
+    tick(SPEED * 5);
+    expect(visibleText(container)).toBe("ASCENT");
+  });
+
+  it("drops a decrypt still waiting out its delay if deactivated first, without flashing any letters", () => {
+    const { container, rerender } = render(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active />);
+    tick(100);
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+    tick(1000);
+
+    expect(visibleText(container)).toBe("######");
+  });
+
+  it("restarts the wait when re-activated during it", () => {
+    const { container, rerender } = render(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active />);
+    tick(150);
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active />);
+    tick(199);
+    expect(visibleText(container)).toBe("######");
+
+    tick(1);
+    tick(SPEED * 6);
+    expect(visibleText(container)).toBe("ASCENT");
+  });
+
+  it("does not delay re-encrypting", () => {
+    const { container, rerender } = render(<DecryptedText {...controlled} decryptDelay={200} active />);
+
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+    tick(SPEED);
+
+    expect(visibleText(container)).toBe("ASCEN#");
+  });
+
+  it("doesn't fire a pending decrypt after unmounting", () => {
+    const { rerender, unmount } = render(<DecryptedText {...controlled} decryptDelay={200} active={false} />);
+    rerender(<DecryptedText {...controlled} decryptDelay={200} active />);
+
+    unmount();
+
+    expect(() => tick(1000)).not.toThrow();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("applies className to revealed letters and encryptedClassName to scrambled ones", () => {
     const { container, rerender } = render(
       <DecryptedText {...controlled} active={false} className="revealed" encryptedClassName="encrypted" />,
