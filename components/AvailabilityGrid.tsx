@@ -4,6 +4,8 @@ import { chunkIntoWeeks, dayOfWeekLabel, isSameDate, shortTimeLabel, weekRangeLa
 import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
+import { HoverGroup } from "@/components/HoverGroup";
+import { MapLabel } from "@/components/MapLabel";
 import { DayColumnHeader } from "@/components/DayColumnHeader";
 import { isColumnFullyAvailable, isDayMatchReady } from "@/lib/schedule-column-state";
 import { mapForWeek } from "@/lib/week-schedule";
@@ -11,6 +13,8 @@ import { mapImageSrc } from "@/lib/valorant-maps";
 
 const WEEK_MAP_REVEAL_CLASS =
   "grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-[var(--d-state)] ease-[var(--e-out)] group-hover:grid-rows-[1fr]";
+
+const MAP_LABEL_CLASS = "font-mono text-section font-semibold uppercase tracking-widest";
 
 // The grid's column widths live in app/globals.css (.availability-grid and its
 // -row / -inner rules) as CSS variables shared by the header row, every teammate
@@ -62,7 +66,7 @@ function WeekSection({
   const src = map ? mapImageSrc(map) : null;
 
   return (
-    <div className={`group ${isFirst ? "" : "border-t-4 border-bg"}`}>
+    <HoverGroup data-testid="week-section" className={`group ${isFirst ? "" : "border-t-4 border-bg"}`}>
       <div className="availability-grid-row grid border-b border-border">
         <div data-testid="grid-label-cell" className={`${LABEL_CELL_CLASS} py-4`}>
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
@@ -137,18 +141,22 @@ function WeekSection({
         <div className="overflow-hidden">
           <div className="relative h-40 w-full overflow-hidden border-t border-border bg-surface-raised">
             {src ? (
-              <Image src={src} alt={map!} fill sizes="900px" className="object-cover" />
+              <>
+                <Image src={src} alt={map!} fill sizes="900px" className="object-cover" />
+                {/* Scrim so the label stays legible over any map's artwork. */}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-4 pb-3 pt-10">
+                  <MapLabel text={map!} className={MAP_LABEL_CLASS} />
+                </div>
+              </>
             ) : (
               <div className="flex h-full items-center justify-center">
-                <span className="font-mono text-caption font-semibold uppercase tracking-wide text-text-dim">
-                  MAP TBD
-                </span>
+                <MapLabel text="MAP TBD" className={MAP_LABEL_CLASS} />
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </HoverGroup>
   );
 }
 
