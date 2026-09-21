@@ -55,12 +55,12 @@ export function Modal({
             ref={panelRef}
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+            className="fixed inset-0 z-50 overflow-y-auto"
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.32, ease: EASE.out } }}
             exit={{ opacity: 0, scale: 0.97, y: -8, transition: { duration: 0.16, ease: EASE.snap } }}
           >
-            {children}
+            <div className="flex min-h-full items-center justify-center p-4">{children}</div>
           </motion.div>
         </>
       )}

@@ -93,3 +93,17 @@ describe("EditableCell", () => {
     expect(screen.getByPlaceholderText("All day")).toHaveValue("6-8pm");
   });
 });
+
+describe("EditableCell option labels", () => {
+  it("uses the same short wording as the read-only cells (Maybe / Out) so the label fits a narrow phone column", () => {
+    renderCell({ status: "not-set" });
+
+    const options = screen.getAllByRole("option").map((o) => [o.getAttribute("value"), o.textContent]);
+    expect(options).toEqual([
+      ["not-set", "Not set"],
+      ["available", "Available"],
+      ["tentative", "Maybe"],
+      ["unavailable", "Out"],
+    ]);
+  });
+});

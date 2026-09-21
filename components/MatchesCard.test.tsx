@@ -108,3 +108,11 @@ describe("MatchesCard Playoffs styling", () => {
     expect(screen.getByText(/PLAYOFFS/)).toBeInTheDocument();
   });
 });
+
+describe("MatchesCard touch targets", () => {
+  it("gives the 'View all' link a touch-sized hit area", () => {
+    render(<MatchesCard matches={[]} teammates={[]} weekDates={[]} today={new Date(2026, 8, 14)} />);
+
+    expect(screen.getByRole("link", { name: "View all" })).toHaveClass("tap-target");
+  });
+});

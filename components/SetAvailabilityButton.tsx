@@ -53,7 +53,7 @@ export function SetAvailabilityButton({
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="btn-press btn-glow rounded-md bg-brand px-4 py-2.5 font-mono text-caption font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+        className="tap-target btn-press btn-glow whitespace-nowrap rounded-md bg-brand px-4 py-2.5 font-mono text-caption font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
       >
         + Set availability
       </button>
@@ -97,7 +97,7 @@ export function SetAvailabilityButton({
               type="button"
               disabled={isPending}
               onClick={() => setIsOpen(false)}
-              className="btn-press rounded-md px-3 py-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted transition-colors hover:text-text-primary disabled:opacity-60"
+              className="tap-target btn-press rounded-md px-3 py-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted transition-colors hover:text-text-primary disabled:opacity-60"
             >
               Cancel
             </button>
@@ -105,7 +105,7 @@ export function SetAvailabilityButton({
               type="button"
               disabled={isPending}
               onClick={apply}
-              className="btn-press btn-glow rounded-md bg-brand px-4 py-2 font-mono text-caption font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="tap-target btn-press btn-glow rounded-md bg-brand px-4 py-2 font-mono text-caption font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {isPending ? "Saving…" : "Apply"}
             </button>

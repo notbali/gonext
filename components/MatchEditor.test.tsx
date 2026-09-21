@@ -67,3 +67,28 @@ describe("MatchEditor", () => {
     expect(screen.getByText("BIND")).toBeInTheDocument();
   });
 });
+
+describe("MatchEditor touch targets", () => {
+  it("gives Edit and Delete touch-sized hit areas", () => {
+    render(
+      <ToastProvider>
+        <MatchEditor matchId="m1" date={new Date("2026-09-14T19:00:00Z")} isPlayoffs={false} map="ASCENT" />
+      </ToastProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Edit" })).toHaveClass("tap-target");
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("tap-target");
+  });
+
+  it("gives Save and Cancel touch-sized hit areas while editing", () => {
+    render(
+      <ToastProvider>
+        <MatchEditor matchId="m1" date={new Date("2026-09-14T19:00:00Z")} isPlayoffs={false} map="ASCENT" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(screen.getByRole("button", { name: "Save" })).toHaveClass("tap-target");
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveClass("tap-target");
+  });
+});

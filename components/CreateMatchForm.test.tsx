@@ -59,3 +59,15 @@ describe("CreateMatchForm", () => {
     await waitFor(() => expect(screen.getByText("Only a coach can manage matches.")).toBeInTheDocument());
   });
 });
+
+describe("CreateMatchForm touch targets", () => {
+  it("gives the Add match button a touch-sized hit area", () => {
+    render(
+      <ToastProvider>
+        <CreateMatchForm action={vi.fn()} />
+      </ToastProvider>,
+    );
+
+    expect(screen.getByRole("button", { name: "Add match" })).toHaveClass("tap-target");
+  });
+});

@@ -104,7 +104,7 @@ export function MatchesCard({
         </p>
         <Link
           href="/matches"
-          className="font-mono text-[11px] font-semibold uppercase tracking-wider text-text-dim transition-colors duration-[var(--d-micro)] hover:text-text-muted"
+          className="tap-target font-mono text-[11px] font-semibold uppercase tracking-wider text-text-dim transition-colors duration-[var(--d-micro)] hover:text-text-muted"
         >
           View all
         </Link>

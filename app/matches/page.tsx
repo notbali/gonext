@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
+import { PageContainer } from "@/components/PageContainer";
 import { MatchEditor } from "@/components/MatchEditor";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
@@ -58,7 +59,7 @@ export default async function MatchesPage() {
 
   if (!team) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-body text-text-muted">
+      <div className="flex min-h-dvh items-center justify-center text-body text-text-muted">
         No team has been seeded yet.
       </div>
     );
@@ -89,23 +90,21 @@ export default async function MatchesPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="mx-auto max-w-3xl px-8 py-8">
-        <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
-          Matches
-        </p>
-        <h1 className="mt-1 text-title font-bold text-text-primary">{team.name}</h1>
+    <PageContainer>
+      <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
+        Matches
+      </p>
+      <h1 className="mt-1 text-title font-bold text-text-primary">{team.name}</h1>
 
-        {upcoming.length > 0 ? (
-          <MatchList title="Upcoming" matches={upcoming} isCoach={isCoach} />
-        ) : (
-          <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
-        )}
-        {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
+      {upcoming.length > 0 ? (
+        <MatchList title="Upcoming" matches={upcoming} isCoach={isCoach} />
+      ) : (
+        <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
+      )}
+      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
 
-        {isCoach && <CreateMatchForm action={createMatch} />}
-        {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
-      </div>
-    </div>
+      {isCoach && <CreateMatchForm action={createMatch} />}
+      {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
+    </PageContainer>
   );
 }

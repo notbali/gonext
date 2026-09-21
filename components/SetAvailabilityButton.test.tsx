@@ -60,3 +60,21 @@ describe("SetAvailabilityButton", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 });
+
+describe("SetAvailabilityButton touch targets", () => {
+  it("gives the trigger a touch-sized hit area that never wraps its label onto two lines", () => {
+    renderButton();
+
+    const trigger = screen.getByRole("button", { name: "+ Set availability" });
+    expect(trigger).toHaveClass("tap-target", "whitespace-nowrap");
+  });
+
+  it("gives the dialog's Cancel and Apply buttons touch-sized hit areas", async () => {
+    renderButton();
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Set availability" }));
+
+    expect(await screen.findByRole("button", { name: "Cancel" })).toHaveClass("tap-target");
+    expect(screen.getByRole("button", { name: "Apply" })).toHaveClass("tap-target");
+  });
+});

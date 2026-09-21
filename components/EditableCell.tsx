@@ -13,6 +13,13 @@ const CELL_STYLES: Record<AvailabilityStatus, string> = {
   "not-set": "border-border/60 bg-transparent",
 };
 
+// Same wording as the read-only cells other teammates see, and short enough to fit
+// a narrow phone column at the 16px size touch devices force on form controls.
+const CELL_OPTION_LABELS: Partial<Record<AvailabilityStatus, string>> = {
+  tentative: "Maybe",
+  unavailable: "Out",
+};
+
 type LockState = "idle" | "committed" | "conflict";
 
 // Mirrors the .slot[data-lock] animation durations in app/globals.css
@@ -111,7 +118,7 @@ export function EditableCell({
       >
         {AVAILABILITY_STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
-            {o.label}
+            {CELL_OPTION_LABELS[o.value] ?? o.label}
           </option>
         ))}
       </select>

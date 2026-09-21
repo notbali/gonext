@@ -82,3 +82,27 @@ describe("Modal", () => {
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 });
+
+describe("Modal on short screens", () => {
+  it("scrolls when its content is taller than the viewport (e.g. a landscape phone with the keyboard open)", () => {
+    render(
+      <Modal open={true} onClose={vi.fn()}>
+        <p>Dialog content</p>
+      </Modal>,
+    );
+
+    expect(screen.getByRole("dialog")).toHaveClass("overflow-y-auto");
+  });
+
+  it("centers content in a min-full-height wrapper, so a tall dialog's top edge stays reachable by scrolling", () => {
+    render(
+      <Modal open={true} onClose={vi.fn()}>
+        <p>Dialog content</p>
+      </Modal>,
+    );
+
+    const wrapper = screen.getByText("Dialog content").parentElement as HTMLElement;
+    expect(wrapper).toHaveClass("flex", "min-h-full", "items-center", "justify-center", "p-4");
+    expect(wrapper.parentElement).toBe(screen.getByRole("dialog"));
+  });
+});

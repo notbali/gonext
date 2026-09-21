@@ -95,8 +95,11 @@ body {
     border-color var(--d-micro) var(--e-snap);
   will-change: transform;
 }
-.slot:hover {
-  transform: translateY(calc(-1 * var(--lift)));
+/* Hover lift only on devices that can really hover — on touch, :hover sticks after a tap. */
+@media (hover: hover) {
+  .slot:hover {
+    transform: translateY(calc(-1 * var(--lift)));
+  }
 }
 .slot:active {
   transform: translateY(1px) scale(0.985);
@@ -343,8 +346,60 @@ body {
 .btn-press:active:not(:disabled) {
   transform: translateY(var(--press)) scale(0.985);
 }
-.btn-glow:hover:not(:disabled) {
-  box-shadow:
-    0 0 0 1px var(--color-brand),
-    0 0 22px rgba(255, 70, 85, 0.35);
+@media (hover: hover) {
+  .btn-glow:hover:not(:disabled) {
+    box-shadow:
+      0 0 0 1px var(--color-brand),
+      0 0 22px rgba(255, 70, 85, 0.35);
+  }
+}
+
+/* Touch input. iOS Safari zooms the whole page when a text field under 16px gets
+   focus, so coarse pointers get 16px controls (this unlayered rule intentionally
+   beats Tailwind's layered text-* utilities). .tap-target grows small text
+   buttons/links to the 44px minimum touch size without touching desktop layout. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .tap-target {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Availability grid columns. The header row, every teammate row, and the inner
+   min-width share these variables so they can never drift apart; the label column
+   narrows on phones and day columns widen on touch to fit 16px selects. */
+.availability-grid {
+  --grid-label-col: 112px;
+  --grid-day-col: 96px;
+}
+@media (min-width: 768px) {
+  .availability-grid {
+    --grid-label-col: 188px;
+  }
+}
+@media (pointer: coarse) {
+  .availability-grid {
+    --grid-day-col: 144px;
+  }
+  /* 16px mono caps ("UNAVAILABLE") clip a phone-width cell, so touch selects use
+     mixed-case sans instead. */
+  .availability-grid select {
+    font-family: var(--font-sans);
+    letter-spacing: normal;
+    text-transform: none;
+  }
+}
+.availability-grid-row {
+  grid-template-columns: var(--grid-label-col) repeat(7, minmax(var(--grid-day-col), 1fr));
+}
+.availability-grid-inner {
+  min-width: calc(var(--grid-label-col) + 7 * var(--grid-day-col));
 }

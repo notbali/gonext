@@ -48,7 +48,7 @@ export function MatchEditor({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim hover:text-text-primary"
+          className="tap-target btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim hover:text-text-primary"
         >
           Edit
         </button>
@@ -65,7 +65,7 @@ export function MatchEditor({
               }
             })
           }
-          className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80 disabled:opacity-60"
+          className="tap-target btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:text-danger/80 disabled:opacity-60"
         >
           Delete
         </button>
@@ -118,14 +118,14 @@ export function MatchEditor({
       <button
         type="submit"
         disabled={isPending}
-        className="btn-press btn-glow rounded bg-brand px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+        className="tap-target btn-press btn-glow rounded bg-brand px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
       >
         Save
       </button>
       <button
         type="button"
         onClick={() => setEditing(false)}
-        className="btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim"
+        className="tap-target btn-press font-mono text-[11px] font-semibold uppercase tracking-wide text-text-dim"
       >
         Cancel
       </button>

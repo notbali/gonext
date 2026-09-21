@@ -202,3 +202,67 @@ describe("AvailabilityGrid weekly map hover-reveal", () => {
     expect(screen.getByTestId("week-map-reveal")).toHaveTextContent("MAP TBD");
   });
 });
+
+describe("AvailabilityGrid mobile layout", () => {
+  it("drives column widths from shared CSS variables so phones can get a narrower label column", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    const scrollWrapper = screen.getByTestId("availability-grid-scroll");
+    expect(scrollWrapper).toHaveClass("availability-grid");
+    expect(scrollWrapper.firstElementChild).toHaveClass("availability-grid-inner");
+
+    // The header row and each teammate row must share the exact same template, or columns misalign.
+    const labelCells = screen.getAllByTestId("grid-label-cell");
+    expect(labelCells).toHaveLength(2); // header row + Alice
+    labelCells.forEach((cell) => expect(cell.parentElement).toHaveClass("availability-grid-row"));
+  });
+
+  it("no longer hard-codes column widths inline, which media queries can't override", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    const scrollWrapper = screen.getByTestId("availability-grid-scroll");
+    const inner = scrollWrapper.firstElementChild as HTMLElement;
+    expect(inner.style.minWidth).toBe("");
+    screen.getAllByTestId("grid-label-cell").forEach((cell) => {
+      expect((cell.parentElement as HTMLElement).style.gridTemplateColumns).toBe("");
+    });
+  });
+
+  it("pins the label column to the left edge while day columns scroll beneath it", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    screen.getAllByTestId("grid-label-cell").forEach((cell) => {
+      expect(cell).toHaveClass("sticky", "left-0", "z-10");
+      // Opaque, so scrolled day cells don't show through the pinned column.
+      expect(cell).toHaveClass("bg-surface");
+    });
+  });
+
+  it("draws a 1px right edge on the pinned column so scrolled-under cells read as clipped, not cut off", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    // A shadow (not a border) so it lands on the first day column's own border-l at scroll 0 instead of doubling it.
+    screen.getAllByTestId("grid-label-cell").forEach((cell) => {
+      expect(cell).toHaveClass("shadow-[1px_0_0_0_var(--color-border)]");
+      expect(cell).not.toHaveClass("border-r");
+    });
+  });
+
+  it("truncates a long teammate name instead of stretching the pinned column", () => {
+    const longName: Teammate[] = [{ ...teammates[0], name: "Alexandria Montgomery-Featherstonehaugh" }];
+    render(<AvailabilityGrid weekDates={weekDates} teammates={longName} matches={[]} />);
+
+    const name = screen.getByText("Alexandria Montgomery-Featherstonehaugh");
+    expect(name).toHaveClass("truncate");
+    expect(name.parentElement).toHaveClass("min-w-0");
+  });
+
+  it("uses tighter label-cell padding on phones", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[]} />);
+
+    screen.getAllByTestId("grid-label-cell").forEach((cell) => {
+      expect(cell).toHaveClass("px-3", "md:px-4");
+      expect(cell).not.toHaveClass("px-4");
+    });
+  });
+});

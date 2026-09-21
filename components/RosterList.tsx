@@ -35,19 +35,19 @@ export function RosterList({
             initial={chip.hidden}
             animate={chip.visible}
             exit={chip.exit}
-            className="flex items-center justify-between rounded-lg border border-border bg-surface p-4"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="relative">
                 <Avatar name={t.name} src={t.image} size={32} />
                 <div className="absolute -inset-1">
                   <AvailabilityRing percent={t.completeness} size={40} />
                 </div>
               </div>
-              <p className="flex items-center gap-2 text-body-lg font-medium text-text-primary">
-                {t.name}
+              <p className="flex min-w-0 items-center gap-2 text-body-lg font-medium text-text-primary">
+                <span className="min-w-0 truncate">{t.name}</span>
                 {t.isCoach && (
-                  <span className="rounded-full bg-brand-dim px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-bright">
+                  <span className="shrink-0 rounded-full bg-brand-dim px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-bright">
                     Coach
                   </span>
                 )}
@@ -58,14 +58,14 @@ export function RosterList({
                 <ActionForm
                   action={() => promoteTeammate(t.id)}
                   successMessage={`${t.name} is now a Coach.`}
-                  className="font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
+                  className="tap-target font-mono text-[11px] font-semibold uppercase tracking-wide text-primary transition-colors duration-[var(--d-micro)] hover:text-primary-bright disabled:opacity-60"
                 >
                   Make Coach
                 </ActionForm>
                 <ActionForm
                   action={() => deactivateTeammate(t.id)}
                   successMessage={`${t.name} was removed.`}
-                  className="font-mono text-[11px] font-semibold uppercase tracking-wide text-danger transition-colors duration-[var(--d-micro)] hover:text-danger/80 disabled:opacity-60"
+                  className="tap-target font-mono text-[11px] font-semibold uppercase tracking-wide text-danger transition-colors duration-[var(--d-micro)] hover:text-danger/80 disabled:opacity-60"
                 >
                   Remove
                 </ActionForm>

@@ -12,14 +12,13 @@ import { mapImageSrc } from "@/lib/valorant-maps";
 const WEEK_MAP_REVEAL_CLASS =
   "grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-[var(--d-state)] ease-[var(--e-out)] group-hover:grid-rows-[1fr]";
 
-// Single source of truth for the grid's column layout, shared by the header
-// row, each teammate row, and the scroll wrapper's minimum width below —
-// keeping them in sync so the grid scrolls (instead of clipping) exactly
-// when its columns would otherwise be squeezed narrower than this.
-const LABEL_COLUMN_WIDTH_PX = 188;
-const DAY_COLUMN_MIN_WIDTH_PX = 96;
-const GRID_TEMPLATE_COLUMNS = `${LABEL_COLUMN_WIDTH_PX}px repeat(7, minmax(${DAY_COLUMN_MIN_WIDTH_PX}px, 1fr))`;
-const GRID_MIN_WIDTH_PX = LABEL_COLUMN_WIDTH_PX + 7 * DAY_COLUMN_MIN_WIDTH_PX;
+// The grid's column widths live in app/globals.css (.availability-grid and its
+// -row / -inner rules) as CSS variables shared by the header row, every teammate
+// row, and the scroll wrapper's minimum width — so they stay in sync, the grid
+// scrolls (instead of clipping) once its columns would be squeezed narrower, and
+// media queries can resize them for phones. The label column is pinned (sticky)
+// so teammate names stay visible while the day columns scroll.
+const LABEL_CELL_CLASS = "sticky left-0 z-10 flex min-w-0 items-center bg-surface px-3 shadow-[1px_0_0_0_var(--color-border)] md:px-4";
 
 const CELL_STYLES: Record<DayAvailability["status"], string> = {
   available: "border-primary/30 bg-primary-dim text-primary-bright",
@@ -64,8 +63,8 @@ function WeekSection({
 
   return (
     <div className={`group ${isFirst ? "" : "border-t-4 border-bg"}`}>
-      <div className="grid border-b border-border" style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}>
-        <div className="flex items-center px-4 py-4">
+      <div className="availability-grid-row grid border-b border-border">
+        <div data-testid="grid-label-cell" className={`${LABEL_CELL_CLASS} py-4`}>
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
             {isFirst ? "Teammate" : weekRangeLabel(weekDates)}
           </span>
@@ -90,12 +89,11 @@ function WeekSection({
       {teammates.map((teammate) => (
         <div
           key={teammate.id}
-          className="grid border-b border-border last:border-b-0"
-          style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}
+          className="availability-grid-row grid border-b border-border last:border-b-0"
         >
-          <div className="flex items-center gap-3 px-4 py-4">
+          <div data-testid="grid-label-cell" className={`${LABEL_CELL_CLASS} gap-3 py-4`}>
             <Avatar name={teammate.name} src={teammate.avatarUrl} size={32} />
-            <span className="text-body font-medium text-text-primary">{teammate.name}</span>
+            <span className="min-w-0 truncate text-body font-medium text-text-primary">{teammate.name}</span>
           </div>
 
           {weekDates.map((date, i) => {
@@ -173,9 +171,9 @@ export function AvailabilityGrid({
     <GridReveal>
       <div
         data-testid="availability-grid-scroll"
-        className="flex-1 overflow-x-auto rounded-lg border border-border bg-surface"
+        className="availability-grid flex-1 overflow-x-auto rounded-lg border border-border bg-surface"
       >
-        <div style={{ minWidth: GRID_MIN_WIDTH_PX }}>
+        <div className="availability-grid-inner">
           {weeks.map((week, weekIndex) => (
             <WeekSection
               key={week[0].toISOString()}

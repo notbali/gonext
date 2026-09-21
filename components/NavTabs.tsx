@@ -22,13 +22,13 @@ export function NavTabs() {
   const active = activeKeyFor(pathname);
 
   return (
-    <nav className="flex items-center gap-6">
+    <nav className="order-last flex w-full items-center justify-around md:order-none md:w-auto md:justify-start md:gap-6">
       {NAV_ITEMS.map((item) => (
         <Link
           key={item.key}
           href={item.href}
           aria-current={item.key === active ? "page" : undefined}
-          className={`relative pb-1 font-mono text-caption font-semibold tracking-wider transition-colors duration-[var(--d-micro)] ${
+          className={`tap-target relative pb-1 font-mono text-caption font-semibold tracking-wider transition-colors duration-[var(--d-micro)] ${
             item.key === active ? "text-text-primary" : "text-text-dim hover:text-text-muted"
           }`}
         >

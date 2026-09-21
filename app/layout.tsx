@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -10,6 +10,7 @@ import { FaviconController } from "@/components/FaviconController";
 import { BootSequence } from "@/components/BootSequence";
 import { getScheduleData } from "@/lib/schedule-data";
 import { getFaviconSignals } from "@/lib/favicon-data";
+import { appViewport } from "@/lib/viewport";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,6 +27,8 @@ export const metadata: Metadata = {
   title: "GO//NEXT — Premier Scheduler",
   description: "Team availability scheduling for VALORANT Premier teams.",
 };
+
+export const viewport: Viewport = appViewport;
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [session, team] = await Promise.all([
