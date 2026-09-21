@@ -64,3 +64,32 @@ describe("ToastProvider", () => {
     expect(toast).toHaveAttribute("data-variant", "error");
   });
 });
+
+describe("ToastProvider on narrow screens", () => {
+  it("spans the screen width with an even gutter on phones and hugs the bottom-right corner from sm up", () => {
+    render(
+      <ToastProvider>
+        <Trigger message="Saved" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fire Saved" }));
+
+    const stack = screen.getByRole("status").parentElement as HTMLElement;
+    expect(stack).toHaveClass("inset-x-4", "bottom-4");
+    expect(stack).toHaveClass("sm:inset-x-auto", "sm:right-7", "sm:bottom-7");
+    expect(stack).not.toHaveClass("right-7");
+  });
+
+  it("only enforces the 300px minimum width from sm up, so a toast never overflows a 320px phone", () => {
+    render(
+      <ToastProvider>
+        <Trigger message="Saved" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fire Saved" }));
+
+    const toast = screen.getByRole("status");
+    expect(toast).toHaveClass("w-full", "sm:w-auto", "sm:min-w-[300px]");
+    expect(toast).not.toHaveClass("min-w-[300px]");
+  });
+});

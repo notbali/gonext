@@ -20,7 +20,7 @@ function NavArrow({
       <span
         aria-disabled="true"
         aria-label={label}
-        className="cursor-not-allowed rounded px-2 py-1.5 text-text-dim opacity-40"
+        className="tap-target cursor-not-allowed rounded px-2 py-1.5 text-text-dim opacity-40"
       >
         {children}
       </span>
@@ -31,7 +31,7 @@ function NavArrow({
     <Link
       href={href}
       aria-label={label}
-      className="btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+      className="tap-target btn-press rounded px-2 py-1.5 text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
     >
       {children}
     </Link>
@@ -55,17 +55,17 @@ export function PageHeader({
   const rangeLabel = dateRangeLabel(weekDates);
 
   return (
-    <div className="flex items-end justify-between border-b border-border bg-bg px-8 py-6">
+    <div className="flex flex-col gap-4 border-b border-border bg-bg px-4 py-4 sm:px-8 sm:py-6 md:flex-row md:items-end md:justify-between">
       <div>
         <p className="font-mono text-caption font-semibold uppercase tracking-widest text-brand">
           Team Availability
         </p>
-        <h1 className="mt-1 text-display font-bold tracking-tight text-text-primary">
+        <h1 className="mt-1 text-title font-bold tracking-tight text-text-primary md:text-display">
           {rangeLabel}
         </h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1 rounded-md border border-border bg-surface px-1 py-1 text-text-dim">
           <NavArrow
             disabled={isAtEarliest}
@@ -75,13 +75,13 @@ export function PageHeader({
             ‹
           </NavArrow>
           {isCurrentRange ? (
-            <span className="px-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted">
+            <span className="whitespace-nowrap px-2 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted">
               This week
             </span>
           ) : (
             <Link
               href="/"
-              className="rounded px-2 py-1.5 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
+              className="tap-target whitespace-nowrap rounded px-2 py-1.5 font-mono text-caption font-semibold uppercase tracking-wider text-text-muted transition-colors hover:bg-bg hover:text-text-primary"
             >
               This week
             </Link>

@@ -120,3 +120,27 @@ describe("RosterList", () => {
     );
   });
 });
+
+describe("RosterList on narrow screens", () => {
+  it("lets a row's actions wrap under the name instead of squeezing it", () => {
+    renderList([teammate("a", "Alice")]);
+
+    const row = screen.getByText("Alice").closest("[class*='rounded-lg']") as HTMLElement;
+    expect(row).toHaveClass("flex-wrap", "gap-3");
+  });
+
+  it("lets a long name shrink and truncate rather than overflow the row", () => {
+    renderList([teammate("a", "Alexandria Montgomery-Featherstonehaugh")]);
+
+    const name = screen.getByText("Alexandria Montgomery-Featherstonehaugh");
+    expect(name).toHaveClass("min-w-0", "truncate");
+    expect(name.parentElement).toHaveClass("min-w-0");
+  });
+
+  it("gives Make Coach and Remove touch-sized hit areas", () => {
+    renderList([teammate("a", "Alice")]);
+
+    expect(screen.getByRole("button", { name: "Make Coach" })).toHaveClass("tap-target");
+    expect(screen.getByRole("button", { name: "Remove" })).toHaveClass("tap-target");
+  });
+});

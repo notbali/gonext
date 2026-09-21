@@ -54,3 +54,22 @@ describe("NavTabs", () => {
     );
   });
 });
+
+describe("NavTabs on narrow screens", () => {
+  it("drops onto its own full-width row below the brand on phones, and sits inline from md up", () => {
+    render(<NavTabs />);
+
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveClass("order-last", "w-full", "justify-around");
+    expect(nav).toHaveClass("md:order-none", "md:w-auto", "md:justify-start", "md:gap-6");
+    expect(nav).not.toHaveClass("gap-6");
+  });
+
+  it("gives every tab a touch-sized hit area", () => {
+    render(<NavTabs />);
+
+    for (const name of [/schedule/i, /matches/i, /roster/i]) {
+      expect(screen.getByRole("link", { name })).toHaveClass("tap-target");
+    }
+  });
+});

@@ -42,14 +42,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {mounted &&
         createPortal(
-          <div className="pointer-events-none fixed bottom-7 right-7 z-50 flex flex-col gap-2">
+          <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:inset-x-auto sm:bottom-7 sm:right-7">
             <AnimatePresence>
               {toasts.map((t) => (
                 <motion.div
                   key={t.id}
                   role="status"
                   data-variant={t.variant}
-                  className={`pointer-events-auto flex min-w-[300px] items-start gap-3 rounded-lg border bg-surface-raised py-3 pl-3 pr-4 shadow-lg ${
+                  className={`pointer-events-auto flex w-full items-start gap-3 rounded-lg border bg-surface-raised py-3 pl-3 pr-4 shadow-lg sm:w-auto sm:min-w-[300px] ${
                     t.variant === "error" ? "border-danger/40" : "border-primary/40"
                   }`}
                   initial={toastVariant.hidden}

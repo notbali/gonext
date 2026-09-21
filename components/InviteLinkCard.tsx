@@ -34,17 +34,17 @@ export function InviteLinkCard({ teamId, token }: { teamId: string; token: strin
       <p className="mt-1 text-body text-text-muted">
         Anyone with this link can join the team as themselves via Discord.
       </p>
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           readOnly
           value={url}
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 truncate rounded border border-border bg-surface-raised px-2 py-1.5 font-mono text-caption text-text-primary"
+          className="w-full min-w-0 truncate rounded border border-border bg-surface-raised px-2 py-1.5 font-mono text-caption text-text-primary sm:w-auto sm:flex-1"
         />
         <button
           type="button"
           onClick={copy}
-          className="shrink-0 rounded-md border border-border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-text-primary hover:border-brand/50"
+          className="tap-target shrink-0 rounded-md border border-border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-text-primary hover:border-brand/50"
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -64,7 +64,7 @@ export function InviteLinkCard({ teamId, token }: { teamId: string; token: strin
               }
             })
           }
-          className="shrink-0 rounded-md border border-border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:border-danger/50 disabled:opacity-60"
+          className="tap-target shrink-0 rounded-md border border-border px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-danger hover:border-danger/50 disabled:opacity-60"
         >
           Regenerate
         </button>

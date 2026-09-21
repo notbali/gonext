@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { AccessGate } from "@/components/AccessGate";
 import { PageHeader } from "@/components/PageHeader";
+import { ScheduleLayout } from "@/components/ScheduleLayout";
 import { AvailabilityGrid } from "@/components/AvailabilityGrid";
 import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
@@ -32,14 +33,26 @@ export default async function SchedulePage({
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-dvh bg-bg">
       <PageHeader
         weekDates={schedule.weekDates}
         weekOffset={weekOffset}
         weekCount={WEEKS_AHEAD}
         myTeammateId={session.teammateId}
       />
-      <div className="flex gap-6 px-8 py-6">
+      <ScheduleLayout
+        sidebar={
+          <>
+            <LegendCard />
+            <MatchesCard
+              matches={schedule.matches}
+              teammates={schedule.teammates}
+              weekDates={schedule.weekDates}
+              today={today}
+            />
+          </>
+        }
+      >
         <AvailabilityGrid
           weekDates={schedule.weekDates}
           teammates={schedule.teammates}
@@ -47,16 +60,7 @@ export default async function SchedulePage({
           myTeammateId={session?.teammateId}
           weekMaps={schedule.weekMaps}
         />
-        <div className="flex w-[340px] shrink-0 flex-col gap-4">
-          <LegendCard />
-          <MatchesCard
-            matches={schedule.matches}
-            teammates={schedule.teammates}
-            weekDates={schedule.weekDates}
-            today={today}
-          />
-        </div>
-      </div>
+      </ScheduleLayout>
     </div>
   );
 }
