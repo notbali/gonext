@@ -64,22 +64,6 @@ function WeekSection({
 
   return (
     <div className={`group ${isFirst ? "" : "border-t-4 border-bg"}`}>
-      <div data-testid="week-map-reveal" className={WEEK_MAP_REVEAL_CLASS}>
-        <div className="overflow-hidden">
-          <div className="relative h-40 w-full overflow-hidden bg-surface-raised">
-            {src ? (
-              <Image src={src} alt={map!} fill sizes="900px" className="object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <span className="font-mono text-caption font-semibold uppercase tracking-wide text-text-dim">
-                  MAP TBD
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="grid border-b border-border" style={{ gridTemplateColumns: GRID_TEMPLATE_COLUMNS }}>
         <div className="flex items-center px-4 py-4">
           <span className="font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
@@ -150,6 +134,22 @@ function WeekSection({
           })}
         </div>
       ))}
+
+      <div data-testid="week-map-reveal" className={WEEK_MAP_REVEAL_CLASS}>
+        <div className="overflow-hidden">
+          <div className="relative h-40 w-full overflow-hidden border-t border-border bg-surface-raised">
+            {src ? (
+              <Image src={src} alt={map!} fill sizes="900px" className="object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <span className="font-mono text-caption font-semibold uppercase tracking-wide text-text-dim">
+                  MAP TBD
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
