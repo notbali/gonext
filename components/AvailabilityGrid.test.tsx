@@ -119,7 +119,7 @@ describe("AvailabilityGrid weekly map hover-reveal", () => {
     expect(reveal).toHaveTextContent("MAP TBD");
   });
 
-  it("positions the reveal above the week's day headers so expanding it pushes the calendar down", () => {
+  it("positions the reveal below the week's day headers and teammate rows so the calendar stays fixed while it expands", () => {
     render(
       <AvailabilityGrid
         weekDates={weekDates}
@@ -130,11 +130,57 @@ describe("AvailabilityGrid weekly map hover-reveal", () => {
     );
 
     const reveal = screen.getByTestId("week-map-reveal");
-    const firstHeaderCell = screen.getAllByTestId("grid-column-header")[0];
-    expect(reveal.compareDocumentPosition(firstHeaderCell)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    const lastHeaderCell = screen.getAllByTestId("grid-column-header")[6];
+    const teammateName = screen.getByText("Alice");
+    expect(lastHeaderCell.compareDocumentPosition(reveal)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(teammateName.compareDocumentPosition(reveal)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  it("animates the reveal's height with the state-duration easing so it reads as the calendar morphing, not a snap", () => {
+  it("keeps the reveal as the last thing in its week so nothing in that week's calendar sits below it to be displaced", () => {
+    render(
+      <AvailabilityGrid
+        weekDates={weekDates}
+        teammates={teammates}
+        matches={[]}
+        weekMaps={[{ weekStart: weekDates[0], map: "ASCENT" }]}
+      />,
+    );
+
+    const reveal = screen.getByTestId("week-map-reveal");
+    expect(reveal.nextElementSibling).toBeNull();
+  });
+
+  it("keeps each week's map reveal after that week's own rows, not before the next week's", () => {
+    const week2Dates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 21 + i));
+    const twoWeekTeammates: Teammate[] = [
+      {
+        id: "t1",
+        name: "Alice",
+        avatarUrl: null,
+        week: [...weekDates, ...week2Dates].map(() => ({ status: "not-set" as const })),
+      },
+    ];
+    render(
+      <AvailabilityGrid
+        weekDates={[...weekDates, ...week2Dates]}
+        teammates={twoWeekTeammates}
+        matches={[]}
+        weekMaps={[
+          { weekStart: weekDates[0], map: "ASCENT" },
+          { weekStart: week2Dates[0], map: "BIND" },
+        ]}
+      />,
+    );
+
+    const [week1Reveal, week2Reveal] = screen.getAllByTestId("week-map-reveal");
+    const week2FirstHeader = screen.getAllByTestId("grid-column-header")[7];
+    // Week 1's map closes out week 1, before week 2's header begins.
+    expect(week1Reveal.compareDocumentPosition(week2FirstHeader)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    // Week 2's map comes after week 2's header.
+    expect(week2FirstHeader.compareDocumentPosition(week2Reveal)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("animates the reveal's height with the state-duration easing so it eases open, not a snap", () => {
     render(
       <AvailabilityGrid
         weekDates={weekDates}
