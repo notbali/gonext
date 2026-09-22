@@ -51,6 +51,25 @@ yourself. The first person to join a team becomes its Coach, who can then find a
 real invite link from the Roster page. Only your own row is ever editable; everyone else's
 stays read-only.
 
+## Admin access
+
+Admins manage every signed-in user from `/admin` (hidden from everyone else — it 404s). Admin is
+granted by Discord user id, via an environment variable rather than the database:
+
+1. In Discord, enable **Settings → Advanced → Developer Mode**, then right-click your name →
+   **Copy User ID**.
+2. Add it to `.env.local` (and the Vercel project's environment variables for production),
+   comma-separating multiple admins:
+   ```
+   ADMIN_DISCORD_IDS="123456789012345678"
+   ```
+3. Restart the server (or redeploy), then log in with that Discord account — an **Admin** tab
+   appears in the nav.
+
+An Admin can add anyone who has signed in with Discord but isn't on the team yet (so new
+players just need to log in once), remove/reactivate anyone including Coaches, promote or
+demote Coaches, and regenerate the invite link.
+
 ## Deployment (Vercel + Neon)
 
 1. **Push to GitHub** — the repo already has a remote (`origin`); commit and push `main`.

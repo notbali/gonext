@@ -4,7 +4,15 @@ import { useEffect, useState, useTransition } from "react";
 import { regenerateInvite } from "@/app/roster/actions";
 import { useToast } from "@/components/ToastProvider";
 
-export function InviteLinkCard({ teamId, token }: { teamId: string; token: string }) {
+export function InviteLinkCard({
+  teamId,
+  token,
+  regenerate = regenerateInvite,
+}: {
+  teamId: string;
+  token: string;
+  regenerate?: (teamId: string) => Promise<void>;
+}) {
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -54,7 +62,7 @@ export function InviteLinkCard({ teamId, token }: { teamId: string; token: strin
           onClick={() =>
             startTransition(async () => {
               try {
-                await regenerateInvite(teamId);
+                await regenerate(teamId);
                 addToast({ message: "Invite link regenerated.", variant: "success" });
               } catch (err) {
                 addToast({

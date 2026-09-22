@@ -13,11 +13,13 @@ export function ActionForm({
   successMessage,
   children,
   className,
+  ariaLabel,
 }: {
   action: () => Promise<void>;
   successMessage: string;
   children: ReactNode;
   className?: string;
+  ariaLabel?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const { addToast } = useToast();
@@ -37,7 +39,13 @@ export function ActionForm({
   }
 
   return (
-    <button type="button" disabled={isPending} onClick={handleClick} className={className}>
+    <button
+      type="button"
+      disabled={isPending}
+      onClick={handleClick}
+      className={className}
+      aria-label={ariaLabel}
+    >
       {children}
     </button>
   );

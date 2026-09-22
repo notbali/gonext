@@ -63,6 +63,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               isSignedIn={Boolean(session?.user)}
               userName={session?.user?.name}
               userImage={session?.user?.image}
+              isAdmin={session?.isAdmin ?? false}
             />
           )}
           <RouteTransition>{children}</RouteTransition>

@@ -9,7 +9,7 @@ The product's name and brand, used everywhere in-app and in marketing.
 _Avoid_: SIDE::WATCH (an inconsistent working name left over in the original mockup — the mockup itself used it inconsistently; no longer used)
 
 **Teammate**:
-A member of the team whose weekly Availability is tracked on the schedule grid. A Teammate only exists because a Discord account joined via the team's Invite Link — there is no placeholder or manually-added state, and a Teammate's name/avatar are always the linked Discord account's. Teammates are not categorized by role or position.
+A member of the team whose weekly Availability is tracked on the schedule grid. A Teammate only exists because a Discord account joined via the team's Invite Link, or an Admin added a Discord account that had already signed in — there is no placeholder state, and a Teammate's name/avatar are always the linked Discord account's. Teammates are not categorized by role or position.
 _Avoid_: Player, member
 
 **Invite Link**:
@@ -18,7 +18,11 @@ _Avoid_: Claim link, invite code
 
 **Coach**:
 A Teammate with elevated permissions: managing the roster (removing/reactivating teammates, regenerating the Invite Link) and managing Matches (create/edit/delete). Everyone else can only edit their own Availability.
-_Avoid_: Admin, IGL (IGL is a Valorant role concept we deliberately don't model — Coach is purely a permissions flag)
+_Avoid_: IGL (IGL is a Valorant role concept we deliberately don't model — Coach is purely a permissions flag). Not the same as Admin.
+
+**Admin**:
+A site operator, above any Coach, who manages every signed-in user from `/admin`: adding someone who has signed in but isn't on the team, deactivating anyone (Coaches included), reactivating, promoting/demoting Coaches, and regenerating the Invite Link. Admin is configured via the `ADMIN_DISCORD_IDS` environment variable (Discord user ids), not stored in the database, and doesn't require being a Teammate.
+_Avoid_: Superuser, owner
 
 **Availability**:
 A Teammate's state for a single day: `Available`, `Tentative`, `Unavailable`, or `Not set` (no value entered). `Available` may optionally carry a time range (e.g. "6PM–11PM") narrower than the full day; without one it's implicitly all day.

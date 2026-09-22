@@ -79,3 +79,14 @@ describe("TopNav on narrow screens", () => {
     expect(screen.getByRole("button", { name: /log out/i })).toHaveClass("tap-target");
   });
 });
+
+describe("TopNav admin link", () => {
+  it("only shows the Admin tab to admins", () => {
+    const { unmount } = renderNav({ isAdmin: false });
+    expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
+    unmount();
+
+    renderNav({ isAdmin: true });
+    expect(screen.getByRole("link", { name: /admin/i })).toBeInTheDocument();
+  });
+});

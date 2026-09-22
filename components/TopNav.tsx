@@ -7,11 +7,13 @@ export function TopNav({
   isSignedIn,
   userName,
   userImage,
+  isAdmin = false,
 }: {
   teamDivision: string;
   isSignedIn: boolean;
   userName?: string | null;
   userImage?: string | null;
+  isAdmin?: boolean;
 }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border bg-surface px-4 py-2 sm:px-8 md:h-16 md:flex-nowrap md:py-0">
@@ -30,7 +32,7 @@ export function TopNav({
         </span>
       </div>
 
-      <NavTabs />
+      <NavTabs showAdmin={isAdmin} />
 
       <div className="flex items-center gap-4">
         <div className="hidden items-center gap-1.5 rounded-full border border-border px-3 py-1.5 sm:flex">
