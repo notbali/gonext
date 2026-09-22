@@ -7,6 +7,8 @@ import { LegendCard } from "@/components/LegendCard";
 import { MatchesCard } from "@/components/MatchesCard";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { addWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
+import { db } from "@/lib/db";
+import type { AvailabilityStatus } from "@/lib/types";
 
 export default async function SchedulePage({
   searchParams,
@@ -32,6 +34,10 @@ export default async function SchedulePage({
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
+  const myDefaults = (
+    await db.weeklyDefault.findMany({ where: { teammateId: session.teammateId } })
+  ).map((d) => ({ dayOfWeek: d.dayOfWeek, status: d.status as AvailabilityStatus, timeRange: d.timeRange }));
+
   return (
     <div className="min-h-dvh bg-bg">
       <PageHeader
@@ -39,6 +45,7 @@ export default async function SchedulePage({
         weekOffset={weekOffset}
         weekCount={WEEKS_AHEAD}
         myTeammateId={session.teammateId}
+        myDefaults={myDefaults}
       />
       <ScheduleLayout
         sidebar={

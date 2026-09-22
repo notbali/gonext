@@ -86,7 +86,8 @@ model Teammate {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  availability Availability[]
+  availability   Availability[]
+  weeklyDefaults WeeklyDefault[]
 }
 
 model Match {
@@ -151,4 +152,20 @@ model Availability {
   teammate   Teammate @relation(fields: [teammateId], references: [id])
 
   @@unique([teammateId, date])
+}
+
+// A Teammate's usual Availability for a weekday. Never copied into Availability
+// rows: a day with no entry of its own (or one set back to Not set) falls back
+// to this when the schedule is read, so changing a default updates every such day.
+model WeeklyDefault {
+  id        String  @id @default(cuid())
+  // 0 = Monday ... 6 = Sunday, matching the schedule's Monday-first weeks.
+  dayOfWeek Int
+  status    String
+  timeRange String?
+
+  teammateId String
+  teammate   Teammate @relation(fields: [teammateId], references: [id], onDelete: Cascade)
+
+  @@unique([teammateId, dayOfWeek])
 }

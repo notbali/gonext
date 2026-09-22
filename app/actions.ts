@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth, signIn, signOut } from "@/auth";
 import { db } from "@/lib/db";
-import type { AvailabilityStatus } from "@/lib/types";
+import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus, type WeeklyDefaultEntry } from "@/lib/types";
 import { normalizeTimeRange } from "@/lib/time-range";
 
 export async function updateAvailability(
@@ -76,6 +76,40 @@ export async function updateAvailabilityNote(teammateId: string, dateISO: string
     update: { note: trimmed || null },
     create: { teammateId, date, status: "not-set", note: trimmed || null },
   });
+
+  revalidatePath("/");
+}
+
+/**
+ * Replaces the caller's weekly defaults. A "not-set" day has no default, so
+ * it's dropped; every range is validated before anything is written.
+ */
+export async function setWeeklyDefaults(teammateId: string, entries: WeeklyDefaultEntry[]) {
+  const session = await auth();
+  if (!session?.teammateId || session.teammateId !== teammateId) {
+    throw new Error("You can only edit your own availability.");
+  }
+
+  const statuses = AVAILABILITY_STATUS_OPTIONS.map((o) => o.value);
+  const rows = entries
+    .map((e) => {
+      if (!Number.isInteger(e.dayOfWeek) || e.dayOfWeek < 0 || e.dayOfWeek > 6) {
+        throw new Error("Invalid day of the week.");
+      }
+      if (!statuses.includes(e.status)) throw new Error("Invalid availability status.");
+      return {
+        teammateId,
+        dayOfWeek: e.dayOfWeek,
+        status: e.status,
+        timeRange: e.status === "available" ? normalizeTimeRange(e.timeRange) : null,
+      };
+    })
+    .filter((r) => r.status !== "not-set");
+
+  await db.$transaction([
+    db.weeklyDefault.deleteMany({ where: { teammateId } }),
+    db.weeklyDefault.createMany({ data: rows }),
+  ]);
 
   revalidatePath("/");
 }

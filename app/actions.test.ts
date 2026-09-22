@@ -7,7 +7,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const auth = vi.fn();
 vi.mock("@/auth", () => ({ auth: () => auth() }));
 
-const { setWeekAvailability, updateAvailability, updateAvailabilityNote } = await import("./actions");
+const { setWeekAvailability, updateAvailability, updateAvailabilityNote, setWeeklyDefaults } = await import("./actions");
 const { revalidatePath } = await import("next/cache");
 
 beforeEach(async () => {
@@ -205,5 +205,55 @@ describe("updateAvailabilityNote", () => {
 
     const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
     expect(row.note).toBe("late");
+  });
+});
+
+describe("setWeeklyDefaults", () => {
+  it("only lets a teammate set their own defaults", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: "someone-else" });
+
+    await expect(setWeeklyDefaults(teammate.id, [{ dayOfWeek: 1, status: "available", timeRange: null }])).rejects.toThrow(
+      "You can only edit your own availability.",
+    );
+  });
+
+  it("replaces all defaults, canonicalizing ranges and dropping Not set days", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+    await setWeeklyDefaults(teammate.id, [{ dayOfWeek: 0, status: "unavailable", timeRange: null }]);
+
+    await setWeeklyDefaults(teammate.id, [
+      { dayOfWeek: 1, status: "available", timeRange: "7-11pm" },
+      { dayOfWeek: 3, status: "tentative", timeRange: "ignored" },
+      { dayOfWeek: 5, status: "not-set", timeRange: null },
+    ]);
+
+    const rows = await testDb.weeklyDefault.findMany({ where: { teammateId: teammate.id }, orderBy: { dayOfWeek: "asc" } });
+    expect(rows.map((r) => [r.dayOfWeek, r.status, r.timeRange])).toEqual([
+      [1, "available", "7PM–11PM"],
+      [3, "tentative", null],
+    ]);
+  });
+
+  it("rejects an unreadable range without changing anything", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+    await setWeeklyDefaults(teammate.id, [{ dayOfWeek: 0, status: "unavailable", timeRange: null }]);
+
+    await expect(
+      setWeeklyDefaults(teammate.id, [{ dayOfWeek: 1, status: "available", timeRange: "whenever" }]),
+    ).rejects.toThrow(/time range/i);
+
+    expect(await testDb.weeklyDefault.count({ where: { teammateId: teammate.id } })).toBe(1);
+  });
+
+  it("rejects a day outside Monday (0) to Sunday (6)", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await expect(setWeeklyDefaults(teammate.id, [{ dayOfWeek: 7, status: "available", timeRange: null }])).rejects.toThrow(
+      /day/i,
+    );
   });
 });

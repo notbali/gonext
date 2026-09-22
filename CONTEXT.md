@@ -28,9 +28,24 @@ _Avoid_: Superuser, owner
 A Teammate's state for a single day: `Available`, `Tentative`, `Unavailable`, or `Not set` (no value entered). `Available` may optionally carry a time range (e.g. "6PM–11PM") narrower than the full day; without one it's implicitly all day.
 _Avoid_: Status (too generic on its own)
 
+**Weekly default**:
+A Teammate's usual Availability for a weekday (e.g. every Tuesday, Available 7PM–11PM). It's never copied into a day: any day without its own entry (or one set back to `Not set`) reads as the default, so changing a default updates all such days at once.
+_Avoid_: Recurring availability, template
+
+**Note**:
+A short aside (up to 60 characters) a Teammate attaches to one day, e.g. "might be late". Shown on the grid and in Discord pings; it doesn't affect Confirmed.
+
 **Match**:
 A scheduled Premier match window on the team's calendar — a date and time. Premier queues teams against each other within a match window rather than fixing opponents in advance, so a Match never has a known opponent ahead of time; it isn't modeled. Its Map is derived from the Week it falls in, except a Match flagged Playoffs, which has none.
 _Avoid_: Fixture, opponent (there is no pre-set opponent field), Group (the old per-match text label this replaced)
+
+**Result**:
+A played Match's outcome, `Win` or `Loss`, recorded by a Coach. Results roll up into the season **Record**, overall and per Map (Playoffs counted on its own).
+_Avoid_: Score (rounds aren't tracked)
+
+**Ping**:
+A Discord message the team's bot posts from GO//NEXT: the match-day roll call, the 30-minute warning, and the Sunday reminder about next week's unset days. The site decides what's due; the bot only posts each one once.
+_Avoid_: Notification, alert
 
 **Week**:
 The Monday–Sunday scheduling unit Riot assigns a single Map to; a Coach sets that Map, and up to two Matches can be played on it that week.
@@ -41,7 +56,7 @@ The season's single tournament-style Match, run as a bracket rather than on a We
 _Avoid_: Finals (Playoffs may be more than one bracket round; the flag doesn't distinguish them)
 
 **Confirmed**:
-A Teammate counts as confirmed for a Match when their Availability on the Match's date is `Available` and, if a time range is set, that range covers the Match's start time. Confirmed is always derived from Availability — never stored as its own field.
+A Teammate counts as confirmed for a Match when their Availability on the Match's date (in Eastern time) is `Available` and, if a time range is set, that range covers the Match's start time. Confirmed is always derived from Availability — never stored as its own field.
 _Avoid_: RSVP'd, accepted
 
 **This week**:

@@ -13,6 +13,15 @@ export interface DayAvailability {
   timeRange?: string;
   /** A short aside for the day, e.g. "might be late". */
   note?: string;
+  /** True when status/timeRange come from the teammate's WeeklyDefault, not an entry for this day. */
+  fromDefault?: boolean;
+}
+
+/** 0 = Monday ... 6 = Sunday. */
+export interface WeeklyDefaultEntry {
+  dayOfWeek: number;
+  status: AvailabilityStatus;
+  timeRange: string | null;
 }
 
 export interface Teammate {

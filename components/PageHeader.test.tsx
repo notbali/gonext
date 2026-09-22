@@ -6,6 +6,9 @@ import { PageHeader } from "./PageHeader";
 vi.mock("@/components/SetAvailabilityButton", () => ({
   SetAvailabilityButton: () => null,
 }));
+vi.mock("@/components/WeeklyDefaultsButton", () => ({
+  WeeklyDefaultsButton: () => null,
+}));
 
 const weekDates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 7 + i));
 const weekCount = 4;
