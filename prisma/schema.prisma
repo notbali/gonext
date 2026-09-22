@@ -95,6 +95,8 @@ model Match {
   // The season's single tournament-style match, run as a bracket rather than
   // on that week's assigned Map — see WeekMap.
   isPlayoffs Boolean  @default(false)
+  // Recorded by a Coach once the match has been played; null until then.
+  result     MatchResult?
 
   teamId String
   team   Team   @relation(fields: [teamId], references: [id])
@@ -115,6 +117,11 @@ model WeekMap {
   team   Team   @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, weekStart])
+}
+
+enum MatchResult {
+  WIN
+  LOSS
 }
 
 enum ValorantMap {

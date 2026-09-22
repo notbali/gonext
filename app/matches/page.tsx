@@ -6,22 +6,33 @@ import { PageContainer } from "@/components/PageContainer";
 import { MatchEditor } from "@/components/MatchEditor";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { CalendarSubscribeCard } from "@/components/CalendarSubscribeCard";
+import { MatchResultPicker } from "@/components/MatchResultPicker";
+import { RecordCard } from "@/components/RecordCard";
+import { summarizeRecord, type MatchResultValue } from "@/lib/match-record";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
 import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { mapForWeek } from "@/lib/week-schedule";
 import { WEEKS_AHEAD } from "@/lib/schedule-data";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
-type MatchRow = { id: string; date: Date; isPlayoffs: boolean; map: string | null };
+type MatchRow = {
+  id: string;
+  date: Date;
+  isPlayoffs: boolean;
+  map: string | null;
+  result: MatchResultValue | null;
+};
 
 function MatchList({
   title,
   matches,
   isCoach,
+  showResults = false,
 }: {
   title: string;
   matches: MatchRow[];
   isCoach: boolean;
+  showResults?: boolean;
 }) {
   return (
     <div className="mt-6">
@@ -41,9 +52,12 @@ function MatchList({
               >
                 {matchDateLine(m, label)}
               </p>
-              {isCoach && (
-                <MatchEditor matchId={m.id} date={m.date} isPlayoffs={m.isPlayoffs} map={m.map} />
-              )}
+              <div className="flex shrink-0 items-center gap-4">
+                {showResults && <MatchResultPicker matchId={m.id} result={m.result} canEdit={isCoach} />}
+                {isCoach && (
+                  <MatchEditor matchId={m.id} date={m.date} isPlayoffs={m.isPlayoffs} map={m.map} />
+                )}
+              </div>
             </div>
           );
         })}
@@ -75,6 +89,7 @@ export default async function MatchesPage() {
     date: m.date,
     isPlayoffs: m.isPlayoffs,
     map: m.isPlayoffs ? null : mapForWeek(weekMaps, m.date),
+    result: m.result,
   });
   const upcoming = team.matches.filter((m) => m.date >= now).map(toRow);
   const past = team.matches
@@ -108,7 +123,8 @@ export default async function MatchesPage() {
       ) : (
         <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
       )}
-      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
+      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} showResults />}
+      <RecordCard record={summarizeRecord(past)} />
 
       <CalendarSubscribeCard feedUrl={feedUrl} />
 

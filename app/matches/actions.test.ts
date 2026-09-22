@@ -7,7 +7,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const auth = vi.fn();
 vi.mock("@/auth", () => ({ auth: () => auth() }));
 
-const { createMatch, updateMatch, deleteMatch, setWeekMap } = await import("./actions");
+const { createMatch, updateMatch, deleteMatch, setWeekMap, setMatchResult } = await import("./actions");
 
 beforeEach(async () => {
   await resetTestDb();
@@ -263,5 +263,54 @@ describe("setWeekMap", () => {
     const weekMaps = await testDb.weekMap.findMany();
     expect(weekMaps).toHaveLength(1);
     expect(weekMaps[0].map).toBe("BIND");
+  });
+});
+
+describe("setMatchResult", () => {
+  async function pastMatch() {
+    const team = await makeTeam();
+    return testDb.match.create({ data: { teamId: team.id, date: new Date("2020-01-01T00:00:00Z") } });
+  }
+
+  it("throws when the caller is not a coach", async () => {
+    auth.mockResolvedValue({ isCoach: false });
+    const match = await pastMatch();
+
+    await expect(setMatchResult(match.id, "WIN")).rejects.toThrow("Only a coach can manage matches.");
+    expect((await testDb.match.findUniqueOrThrow({ where: { id: match.id } })).result).toBeNull();
+  });
+
+  it("records a win or a loss on a played match", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    const match = await pastMatch();
+
+    await setMatchResult(match.id, "LOSS");
+    expect((await testDb.match.findUniqueOrThrow({ where: { id: match.id } })).result).toBe("LOSS");
+
+    await setMatchResult(match.id, "WIN");
+    expect((await testDb.match.findUniqueOrThrow({ where: { id: match.id } })).result).toBe("WIN");
+  });
+
+  it("clears a result", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    const match = await pastMatch();
+    await setMatchResult(match.id, "WIN");
+
+    await setMatchResult(match.id, null);
+    expect((await testDb.match.findUniqueOrThrow({ where: { id: match.id } })).result).toBeNull();
+  });
+
+  it("refuses a result for a match that hasn't started", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    const team = await makeTeam();
+    const future = await testDb.match.create({ data: { teamId: team.id, date: new Date("2099-01-01T00:00:00Z") } });
+
+    await expect(setMatchResult(future.id, "WIN")).rejects.toThrow(/hasn't been played/i);
+  });
+
+  it("rejects anything other than WIN, LOSS or null", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    const match = await pastMatch();
+    await expect(setMatchResult(match.id, "DRAW" as never)).rejects.toThrow(/result/i);
   });
 });
