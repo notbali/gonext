@@ -7,7 +7,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const auth = vi.fn();
 vi.mock("@/auth", () => ({ auth: () => auth() }));
 
-const { setWeekAvailability } = await import("./actions");
+const { setWeekAvailability, updateAvailability } = await import("./actions");
 const { revalidatePath } = await import("next/cache");
 
 beforeEach(async () => {
@@ -70,7 +70,7 @@ describe("setWeekAvailability", () => {
 
     const rows = await testDb.availability.findMany({ where: { teammateId: teammate.id } });
     expect(rows).toHaveLength(DATES.length);
-    expect(rows.every((r) => r.status === "available" && r.timeRange === "6pm-9pm")).toBe(true);
+    expect(rows.every((r) => r.status === "available" && r.timeRange === "6PM–9PM")).toBe(true);
   });
 
   it("clears the time range when status is not available", async () => {
@@ -91,5 +91,57 @@ describe("setWeekAvailability", () => {
 
     expect(revalidatePath).toHaveBeenCalledWith("/");
     expect(revalidatePath).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("time ranges", () => {
+  it("setWeekAvailability rejects a time range it can't read, writing nothing", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await expect(
+      setWeekAvailability(teammate.id, DATES, "available", "after work"),
+    ).rejects.toThrow(/time range/i);
+
+    expect(await testDb.availability.count()).toBe(0);
+  });
+
+  it("updateAvailability stores the canonical form of a range", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await updateAvailability(teammate.id, DATES[0], "available", "7-11pm");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.timeRange).toBe("7PM–11PM");
+  });
+
+  it("updateAvailability stores a blank range as all day", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await updateAvailability(teammate.id, DATES[0], "available", "   ");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.timeRange).toBeNull();
+  });
+
+  it("updateAvailability rejects a range it can't read", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await expect(
+      updateAvailability(teammate.id, DATES[0], "available", "whenever"),
+    ).rejects.toThrow(/time range/i);
+  });
+
+  it("ignores an unreadable range when the status isn't Available", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await updateAvailability(teammate.id, DATES[0], "tentative", "whenever");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.timeRange).toBeNull();
   });
 });

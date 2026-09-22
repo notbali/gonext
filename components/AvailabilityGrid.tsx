@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { DayAvailability, Match, Teammate, WeekMapInfo } from "@/lib/types";
-import { chunkIntoWeeks, dayOfWeekLabel, isSameDate, shortTimeLabel, weekRangeLabel } from "@/lib/dates";
+import { chunkIntoWeeks, dayOfWeekLabel, isOnTeamDay, shortTimeLabel, weekRangeLabel } from "@/lib/dates";
 import { EditableCell } from "@/components/EditableCell";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
@@ -62,7 +62,7 @@ function WeekSection({
   isFirst: boolean;
   map: string | null;
 }) {
-  const matchByDay = weekDates.map((date) => matches.find((m) => isSameDate(m.date, date)));
+  const matchByDay = weekDates.map((date) => matches.find((m) => isOnTeamDay(m.date, date)));
   const src = map ? mapImageSrc(map) : null;
 
   return (

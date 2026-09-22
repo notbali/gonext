@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability } from "@/app/actions";
+import { normalizeTimeRange } from "@/lib/time-range";
 import { useToast } from "@/components/ToastProvider";
 
 const CELL_STYLES: Record<AvailabilityStatus, string> = {
@@ -42,6 +43,8 @@ export function EditableCell({
 }) {
   const [localStatus, setLocalStatus] = useState(status);
   const [localRange, setLocalRange] = useState(timeRange ?? "");
+  // The range as last saved, so a blur with no real edit doesn't re-save.
+  const [savedRange, setSavedRange] = useState(timeRange ?? "");
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
@@ -57,6 +60,7 @@ export function EditableCell({
   if (status !== prevStatus || timeRange !== prevTimeRange) {
     setPrevStatus(status);
     setPrevTimeRange(timeRange);
+    setSavedRange(timeRange ?? "");
     if (!isPending) {
       setLocalStatus(status);
       setLocalRange(timeRange ?? "");
@@ -97,8 +101,25 @@ export function EditableCell({
       } catch {
         // ignore
       }
+      setSavedRange(nextRange);
       setLockState("committed");
     });
+  }
+
+  // Validated here as well as on the server, since Next.js hides a server
+  // action's error message in production builds.
+  function commitRange() {
+    let normalized: string;
+    try {
+      normalized = normalizeTimeRange(localRange) ?? "";
+    } catch (err) {
+      setLocalRange(savedRange);
+      setLockState("conflict");
+      addToast({ message: (err as Error).message, variant: "error" });
+      return;
+    }
+    setLocalRange(normalized);
+    if (normalized !== savedRange) save(localStatus, normalized);
   }
 
   return (
@@ -128,7 +149,7 @@ export function EditableCell({
           disabled={isPending}
           placeholder="All day"
           onChange={(e) => setLocalRange(e.target.value)}
-          onBlur={() => save(localStatus, localRange)}
+          onBlur={commitRange}
           className="w-full rounded border border-border bg-surface-raised px-1 py-0.5 text-center font-mono text-[10px] text-text-primary placeholder:text-text-dim disabled:opacity-60"
         />
       )}

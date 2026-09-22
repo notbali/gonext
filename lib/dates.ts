@@ -158,6 +158,29 @@ export function isSameDate(a: Date, b: Date): boolean {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
 
+/** Days since the epoch of `instant`'s Eastern calendar day — for whole-day differences. */
+function teamDayNumber(instant: Date): number {
+  const p = getEasternParts(instant);
+  return Date.UTC(p.year, p.month, p.day) / 86_400_000;
+}
+
+/**
+ * Whether a real instant (e.g. a Match's date) falls on `day`, a schedule day
+ * whose local getters stand in for the Eastern wall clock (see
+ * `nowInTeamTimezone`). Unlike `isSameDate`, this doesn't depend on the
+ * server's own timezone — a 9PM ET match is already tomorrow in UTC.
+ */
+export function isOnTeamDay(instant: Date, day: Date): boolean {
+  const p = getEasternParts(instant);
+  return p.year === day.getFullYear() && p.month === day.getMonth() && p.day === day.getDate();
+}
+
+/** Minutes since Eastern midnight for a real instant. */
+export function teamMinuteOfDay(instant: Date): number {
+  const p = getEasternParts(instant);
+  return p.hours * 60 + p.minutes;
+}
+
 export function dayOfWeekLabel(date: Date): string {
   return DAY_LABELS[(date.getDay() + 6) % 7];
 }
@@ -205,14 +228,12 @@ export function minutesUntil(date: Date, now: Date): number {
 
 /** "TODAY" / "TOMORROW" / "IN N DAYS" within the displayed week, else "NEXT WEEK". */
 export function countdownLabel(matchDate: Date, today: Date, weekDates: Date[]): string {
-  const diffDays = Math.round(
-    (startOfDay(matchDate).getTime() - startOfDay(today).getTime()) / 86_400_000,
-  );
+  const diffDays = teamDayNumber(matchDate) - teamDayNumber(today);
 
   if (diffDays === 0) return "TODAY";
   if (diffDays === 1) return "TOMORROW";
 
-  const withinDisplayedWeek = weekDates.some((d) => isSameDate(d, matchDate));
+  const withinDisplayedWeek = weekDates.some((d) => isOnTeamDay(matchDate, d));
   if (withinDisplayedWeek && diffDays > 0) return `IN ${diffDays} DAYS`;
 
   return "NEXT WEEK";

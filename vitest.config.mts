@@ -4,6 +4,8 @@ import path from "node:path";
 export default defineConfig({
   test: {
     environment: "node",
+    // Agent worktrees under .claude/ hold stale copies of the suite.
+    exclude: ["**/node_modules/**", ".claude/**"],
     // Test files share one physical Postgres test DB (see tests/test-db.ts) and each
     // wipes all tables in beforeEach, so files must not run concurrently against it.
     fileParallelism: false,

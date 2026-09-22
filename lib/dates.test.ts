@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   chunkIntoWeeks,
+  countdownLabel,
+  isOnTeamDay,
   dateRangeLabel,
   easternPartsToUtc,
   getEasternParts,
@@ -214,5 +216,39 @@ describe("dateRangeLabel", () => {
     const dates = [new Date(2026, 8, 28), new Date(2026, 9, 11)];
 
     expect(dateRangeLabel(dates)).toBe("SEP 28 — OCT 11");
+  });
+});
+
+describe("isOnTeamDay", () => {
+  // Tuesday Sep 22 2026, as a schedule day (local midnight standing in for Eastern).
+  const tuesday = new Date(2026, 8, 22);
+
+  it("matches an instant on the same Eastern calendar day", () => {
+    expect(isOnTeamDay(easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 13, minutes: 0 }), tuesday)).toBe(true);
+  });
+
+  it("keeps a late-evening Eastern instant on its Eastern day, though it's already tomorrow in UTC", () => {
+    // 9PM EDT = 01:00 UTC Wednesday.
+    expect(isOnTeamDay(easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 21, minutes: 0 }), tuesday)).toBe(true);
+  });
+
+  it("rejects an instant on a different Eastern day", () => {
+    expect(isOnTeamDay(easternPartsToUtc({ year: 2026, month: 8, day: 23, hours: 1, minutes: 0 }), tuesday)).toBe(false);
+  });
+});
+
+describe("countdownLabel across UTC midnight", () => {
+  const weekDates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 21 + i));
+
+  it("calls a 9PM ET match TODAY when it's 3PM ET the same day", () => {
+    const match = easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 21, minutes: 0 });
+    const now = easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 15, minutes: 0 });
+    expect(countdownLabel(match, now, weekDates)).toBe("TODAY");
+  });
+
+  it("calls a 7PM ET match TOMORROW when it's 9PM ET the night before", () => {
+    const match = easternPartsToUtc({ year: 2026, month: 8, day: 23, hours: 19, minutes: 0 });
+    const now = easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 21, minutes: 0 });
+    expect(countdownLabel(match, now, weekDates)).toBe("TOMORROW");
   });
 });

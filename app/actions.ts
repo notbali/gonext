@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth, signIn, signOut } from "@/auth";
 import { db } from "@/lib/db";
 import type { AvailabilityStatus } from "@/lib/types";
+import { normalizeTimeRange } from "@/lib/time-range";
 
 export async function updateAvailability(
   teammateId: string,
@@ -17,7 +18,7 @@ export async function updateAvailability(
   }
 
   const date = new Date(dateISO);
-  const resolvedRange = status === "available" ? timeRange : null;
+  const resolvedRange = status === "available" ? normalizeTimeRange(timeRange) : null;
 
   await db.availability.upsert({
     where: { teammateId_date: { teammateId, date } },
@@ -39,7 +40,7 @@ export async function setWeekAvailability(
     throw new Error("You can only edit your own availability.");
   }
 
-  const resolvedRange = status === "available" ? timeRange : null;
+  const resolvedRange = status === "available" ? normalizeTimeRange(timeRange) : null;
 
   await Promise.all(
     dateISOs.map((dateISO) => {

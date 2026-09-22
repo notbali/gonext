@@ -78,3 +78,35 @@ describe("SetAvailabilityButton touch targets", () => {
     expect(screen.getByRole("button", { name: "Apply" })).toHaveClass("tap-target");
   });
 });
+
+describe("time range validation", () => {
+  beforeEach(() => {
+    mockSetWeekAvailability.mockReset();
+    mockRefresh.mockReset();
+  });
+
+  it("refuses an unreadable time range without saving, keeping the dialog open", async () => {
+    renderButton();
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Set availability" }));
+    fireEvent.change(await screen.findByPlaceholderText(/all day/i), { target: { value: "whenever" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(await screen.findByText(/couldn't read the time range/i)).toBeInTheDocument();
+    expect(mockSetWeekAvailability).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Apply" })).toBeInTheDocument();
+  });
+
+  it("sends the canonical form of the range", async () => {
+    mockSetWeekAvailability.mockResolvedValue(undefined);
+    renderButton();
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Set availability" }));
+    fireEvent.change(await screen.findByPlaceholderText(/all day/i), { target: { value: "6pm - 10pm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() =>
+      expect(mockSetWeekAvailability).toHaveBeenCalledWith("t1", ["2026-09-14T00:00:00.000Z"], "available", "6PM–10PM"),
+    );
+  });
+});
