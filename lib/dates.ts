@@ -185,6 +185,11 @@ export function dayOfWeekLabel(date: Date): string {
   return DAY_LABELS[(date.getDay() + 6) % 7];
 }
 
+/** A schedule day as e.g. "WED SEP 23" (local getters, like the rest of the grid). */
+export function shortDayLabel(date: Date): string {
+  return `${dayOfWeekLabel(date)} ${MONTH_LABELS[date.getMonth()]} ${date.getDate()}`;
+}
+
 export function weekRangeLabel(weekDates: Date[]): string {
   return `Week of ${dateRangeLabel(weekDates)}`;
 }

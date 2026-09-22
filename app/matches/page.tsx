@@ -8,11 +8,13 @@ import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { CalendarSubscribeCard } from "@/components/CalendarSubscribeCard";
 import { MatchResultPicker } from "@/components/MatchResultPicker";
 import { RecordCard } from "@/components/RecordCard";
+import { BestTimesCard } from "@/components/BestTimesCard";
+import { suggestMatchTimes } from "@/lib/best-times";
+import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { summarizeRecord, type MatchResultValue } from "@/lib/match-record";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
 import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { mapForWeek } from "@/lib/week-schedule";
-import { WEEKS_AHEAD } from "@/lib/schedule-data";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
 type MatchRow = {
@@ -106,6 +108,11 @@ export default async function MatchesPage() {
   const proto = requestHeaders.get("x-forwarded-proto") ?? "https";
   const feedUrl = `${proto}://${host}/api/calendar/${team.calendarToken}`;
 
+  // Two weeks is far enough ahead for a Premier schedule; beyond that little is set.
+  const today = nowInTeamTimezone();
+  const schedule = isCoach ? await getScheduleData(today, now, db, 2) : null;
+  const suggestions = schedule ? suggestMatchTimes(schedule.teammates, schedule.weekDates, today) : [];
+
   const weeks = chunkIntoWeeks(getLookaheadDates(nowInTeamTimezone(), WEEKS_AHEAD)).map((weekDates) => ({
     weekDates,
     map: mapForWeek(weekMaps, weekDates[0]),
@@ -128,6 +135,7 @@ export default async function MatchesPage() {
 
       <CalendarSubscribeCard feedUrl={feedUrl} />
 
+      {isCoach && <BestTimesCard suggestions={suggestions} />}
       {isCoach && <CreateMatchForm action={createMatch} />}
       {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
     </PageContainer>
