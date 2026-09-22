@@ -8,11 +8,11 @@ import { parseTimeRange, rangeCoversMinute } from "./time-range";
  * A legacy free-text range that can't be read gets the benefit of the doubt
  * — new ranges are validated on save (see normalizeTimeRange).
  */
-export function getConfirmedTeammates(
-  match: Match,
-  teammates: Teammate[],
+export function getConfirmedTeammates<T extends Pick<Teammate, "week">>(
+  match: Pick<Match, "date">,
+  teammates: T[],
   weekDates: Date[],
-): Teammate[] {
+): T[] {
   const dayIndex = weekDates.findIndex((d) => isOnTeamDay(match.date, d));
   if (dayIndex === -1) return [];
   const startMinute = teamMinuteOfDay(match.date);

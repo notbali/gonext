@@ -70,6 +70,26 @@ An Admin can add anyone who has signed in with Discord but isn't on the team yet
 players just need to log in once), remove/reactivate anyone including Coaches, promote or
 demote Coaches, and regenerate the invite link.
 
+## Discord pings (bali-bot)
+
+The site tells the Discord bot ([bali-bot](https://github.com/notbali/bali-bot)) what to post via
+`GET /api/bot/pings`, protected by a shared secret. The bot polls it every few minutes and posts
+each ping once (it remembers each ping's `key`). What goes out, all in Eastern time:
+
+- **Match day** (from noon, or 4h before an earlier match): @s confirmed teammates, says how many
+  more are needed for five, and @s Tentative / Not set teammates to fill in.
+- **30 minutes before a match**: @s confirmed teammates to get online, plus Tentative / Not set
+  ones if the team is short.
+- **Sunday from 6PM**: @s anyone with days not set next week.
+
+Setup:
+
+1. Generate a secret (`openssl rand -base64 33`) and set it as `BOT_API_SECRET` in `.env.local`
+   and the Vercel project's environment variables.
+2. In the bot's environment, set `GONEXT_URL` (e.g. `https://your-app.vercel.app`) and the same
+   value as `GONEXT_BOT_SECRET`.
+3. In Discord, run `/premier set-channel` in the team's server.
+
 ## Deployment (Vercel + Neon)
 
 1. **Push to GitHub** — the repo already has a remote (`origin`); commit and push `main`.
