@@ -73,3 +73,26 @@ describe("NavTabs on narrow screens", () => {
     }
   });
 });
+
+describe("NavTabs admin tab", () => {
+  beforeEach(() => {
+    mockPathname.mockReturnValue("/");
+  });
+
+  it("hides the Admin tab by default", () => {
+    render(<NavTabs />);
+    expect(screen.queryByRole("link", { name: /admin/i })).not.toBeInTheDocument();
+  });
+
+  it("shows an Admin tab linking to /admin when showAdmin is set", () => {
+    render(<NavTabs showAdmin />);
+    expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("href", "/admin");
+  });
+
+  it("marks Admin active on /admin", () => {
+    mockPathname.mockReturnValue("/admin");
+    render(<NavTabs showAdmin />);
+    expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /schedule/i })).not.toHaveAttribute("aria-current");
+  });
+});

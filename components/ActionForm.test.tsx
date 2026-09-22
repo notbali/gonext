@@ -58,4 +58,17 @@ describe("ActionForm", () => {
     resolveAction();
     await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled());
   });
+
+  it("uses ariaLabel as the button's accessible name when given, keeping the visible text", () => {
+    render(
+      <ToastProvider>
+        <ActionForm action={vi.fn()} successMessage="Removed" ariaLabel="Remove Bob">
+          Remove
+        </ActionForm>
+      </ToastProvider>,
+    );
+
+    const button = screen.getByRole("button", { name: "Remove Bob" });
+    expect(button).toHaveTextContent("Remove");
+  });
 });

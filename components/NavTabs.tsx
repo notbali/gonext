@@ -9,21 +9,24 @@ const NAV_ITEMS = [
   { key: "schedule", label: "SCHEDULE", href: "/" },
   { key: "matches", label: "MATCHES", href: "/matches" },
   { key: "roster", label: "ROSTER", href: "/roster" },
+  { key: "admin", label: "ADMIN", href: "/admin" },
 ] as const;
 
 function activeKeyFor(pathname: string): (typeof NAV_ITEMS)[number]["key"] {
+  if (pathname.startsWith("/admin")) return "admin";
   if (pathname.startsWith("/matches")) return "matches";
   if (pathname.startsWith("/roster")) return "roster";
   return "schedule";
 }
 
-export function NavTabs() {
+export function NavTabs({ showAdmin = false }: { showAdmin?: boolean }) {
   const pathname = usePathname();
   const active = activeKeyFor(pathname);
+  const items = NAV_ITEMS.filter((item) => item.key !== "admin" || showAdmin);
 
   return (
     <nav className="order-last flex w-full items-center justify-around md:order-none md:w-auto md:justify-start md:gap-6">
-      {NAV_ITEMS.map((item) => (
+      {items.map((item) => (
         <Link
           key={item.key}
           href={item.href}

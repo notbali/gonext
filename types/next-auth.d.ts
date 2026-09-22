@@ -4,6 +4,7 @@ declare module "next-auth" {
   interface Session {
     teammateId: string | null;
     isCoach: boolean;
+    isAdmin: boolean;
     user: DefaultSession["user"] & { id: string };
   }
 }
