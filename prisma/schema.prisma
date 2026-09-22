@@ -64,6 +64,9 @@ model Team {
   division    String
   // Shareable join link token. Regenerating it invalidates the old link.
   inviteToken String     @unique @default(cuid())
+  // Secret in the match calendar feed's URL (/api/calendar/{token}). Separate
+  // from inviteToken so subscribing a calendar can't leak the join link.
+  calendarToken String   @unique @default(cuid())
   teammates   Teammate[]
   matches     Match[]
   weekMaps    WeekMap[]

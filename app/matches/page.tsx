@@ -1,9 +1,11 @@
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
 import { PageContainer } from "@/components/PageContainer";
 import { MatchEditor } from "@/components/MatchEditor";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
+import { CalendarSubscribeCard } from "@/components/CalendarSubscribeCard";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
 import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { mapForWeek } from "@/lib/week-schedule";
@@ -84,6 +86,11 @@ export default async function MatchesPage() {
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
 
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const proto = requestHeaders.get("x-forwarded-proto") ?? "https";
+  const feedUrl = `${proto}://${host}/api/calendar/${team.calendarToken}`;
+
   const weeks = chunkIntoWeeks(getLookaheadDates(nowInTeamTimezone(), WEEKS_AHEAD)).map((weekDates) => ({
     weekDates,
     map: mapForWeek(weekMaps, weekDates[0]),
@@ -102,6 +109,8 @@ export default async function MatchesPage() {
         <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
       )}
       {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
+
+      <CalendarSubscribeCard feedUrl={feedUrl} />
 
       {isCoach && <CreateMatchForm action={createMatch} />}
       {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
