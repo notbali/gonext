@@ -148,3 +148,16 @@ describe("buildDuePings — next week's availability reminder", () => {
     expect(pingsAt(et(27, 18), [mate(1, available)], [])).toEqual([]);
   });
 });
+
+describe("buildDuePings — notes", () => {
+  it("shows a teammate's note beside their mention on the match-day roll call", () => {
+    const [ping] = pingsAt(et(22, 12), [mate(1, { status: "tentative", note: "might be late" })]);
+    expect(ping.content).toContain("<@101> (might be late)");
+  });
+
+  it("strips mention syntax out of a note so it can't ping anyone", () => {
+    const [ping] = pingsAt(et(22, 12), [mate(1, { status: "tentative", note: "@everyone <@999>" })]);
+    expect(ping.content).not.toContain("@everyone");
+    expect(ping.content).not.toContain("<@999>");
+  });
+});

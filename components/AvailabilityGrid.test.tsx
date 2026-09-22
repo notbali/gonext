@@ -407,3 +407,16 @@ describe("AvailabilityGrid match placement", () => {
     expect(headerCells[3]).not.toHaveTextContent(/match/i);
   });
 });
+
+describe("AvailabilityGrid notes", () => {
+  it("shows another teammate's note on their cell", () => {
+    const withNote: Teammate[] = [
+      { ...teammates[0], week: weekDates.map((_, i) => (i === 0 ? { status: "tentative" as const, note: "might be late" } : { status: "not-set" as const })) },
+    ];
+    render(<AvailabilityGrid weekDates={weekDates} teammates={withNote} matches={[]} />);
+
+    const note = screen.getByTestId("cell-note");
+    expect(note).toHaveTextContent("might be late");
+    expect(note).toHaveAttribute("title", "might be late");
+  });
+});

@@ -61,6 +61,7 @@ export async function getScheduleData(
       return {
         status: record.status as AvailabilityStatus,
         timeRange: record.timeRange ?? undefined,
+        note: record.note ?? undefined,
       };
     }),
   }));

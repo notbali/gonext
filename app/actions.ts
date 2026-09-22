@@ -56,6 +56,30 @@ export async function setWeekAvailability(
   revalidatePath("/");
 }
 
+const MAX_NOTE_LENGTH = 60;
+
+/** Sets the short note on a day, without touching its status or time range. */
+export async function updateAvailabilityNote(teammateId: string, dateISO: string, note: string) {
+  const session = await auth();
+  if (!session?.teammateId || session.teammateId !== teammateId) {
+    throw new Error("You can only edit your own availability.");
+  }
+
+  const trimmed = note.trim();
+  if (trimmed.length > MAX_NOTE_LENGTH) {
+    throw new Error(`Notes are limited to ${MAX_NOTE_LENGTH} characters.`);
+  }
+  const date = new Date(dateISO);
+
+  await db.availability.upsert({
+    where: { teammateId_date: { teammateId, date } },
+    update: { note: trimmed || null },
+    create: { teammateId, date, status: "not-set", note: trimmed || null },
+  });
+
+  revalidatePath("/");
+}
+
 export async function signInWithDiscord(redirectTo?: string) {
   await signIn("discord", redirectTo ? { redirectTo } : undefined);
 }

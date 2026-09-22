@@ -11,6 +11,8 @@ export interface DayAvailability {
   status: AvailabilityStatus;
   /** Only meaningful when status is "available". Absent means the full day. */
   timeRange?: string;
+  /** A short aside for the day, e.g. "might be late". */
+  note?: string;
 }
 
 export interface Teammate {

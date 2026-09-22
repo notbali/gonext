@@ -43,6 +43,21 @@ function mentions(ts: PingTeammate[]): string {
   return ts.map(mention).join(" ");
 }
 
+/** A note as plain text: drops @ and <…> so it can never render as a mention. */
+function safeNote(note: string): string {
+  return note.replace(/<[^>]*>/g, "").replace(/@/g, "").replace(/\s+/g, " ").trim();
+}
+
+/** Mentions with each teammate's note for the day, e.g. "<@1> (might be late)". */
+function mentionsWithNotes(ts: PingTeammate[], dayIndex: number): string {
+  return ts
+    .map((t) => {
+      const note = t.week[dayIndex]?.note ? safeNote(t.week[dayIndex].note!) : "";
+      return note ? `${mention(t)} (${note})` : mention(t);
+    })
+    .join(" ");
+}
+
 function ids(ts: PingTeammate[]): string[] {
   return ts.flatMap((t) => (t.discordId ? [t.discordId] : []));
 }
@@ -67,11 +82,11 @@ function matchDayPing(match: Match, input: PingInput, dayIndex: number): BotPing
 
   const lines = [
     `**Premier today** — ${matchLabel(match)}`,
-    `✅ Confirmed (${confirmedCount(confirmed.length)}): ${confirmed.length ? mentions(confirmed) : "nobody yet"}`,
+    `✅ Confirmed (${confirmedCount(confirmed.length)}): ${confirmed.length ? mentionsWithNotes(confirmed, dayIndex) : "nobody yet"}`,
   ];
   if (short > 0) lines.push(`⚠️ Need ${short} more to play.`);
-  if (tentative.length) lines.push(`🤔 Tentative: ${mentions(tentative)}`);
-  if (notSet.length) lines.push(`❓ Not set: ${mentions(notSet)}`);
+  if (tentative.length) lines.push(`🤔 Tentative: ${mentionsWithNotes(tentative, dayIndex)}`);
+  if (notSet.length) lines.push(`❓ Not set: ${mentionsWithNotes(notSet, dayIndex)}`);
   lines.push(`Set your availability: ${input.siteUrl}`);
 
   return {

@@ -144,6 +144,8 @@ model Availability {
   date   DateTime
   status String
   timeRange String?
+  // A short free-text aside for the day (e.g. "might be late"), up to 60 chars.
+  note      String?
 
   teammateId String
   teammate   Teammate @relation(fields: [teammateId], references: [id])

@@ -118,17 +118,27 @@ function WeekSection({
                       dateISO={date.toISOString()}
                       status={day.status}
                       timeRange={day.timeRange}
+                      note={day.note}
                     />
                   </div>
                 ) : (
                   <div
-                    className={`flex h-full w-full items-center justify-center rounded-md border ${CELL_STYLES[day.status]} ${
+                    className={`flex h-full w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border ${CELL_STYLES[day.status]} ${
                       isMatchDay ? "ring-2 ring-brand/50" : ""
                     }`}
                   >
                     <span className="font-mono text-caption font-semibold tracking-wide">
                       {cellLabel(day)}
                     </span>
+                    {day.note && (
+                      <span
+                        data-testid="cell-note"
+                        title={day.note}
+                        className="w-full truncate px-1 text-center text-[10px] italic text-text-muted"
+                      >
+                        {day.note}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

@@ -173,3 +173,17 @@ describe("getScheduleData", () => {
     expect(schedule!.playoffsMatch).toBeNull();
   });
 });
+
+describe("getScheduleData notes", () => {
+  it("carries a day's note through", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice");
+    await testDb.availability.create({
+      data: { teammateId: alice.id, date: new Date(2026, 7, 31), status: "tentative", note: "might be late" },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.teammates[0].week[0]).toEqual({ status: "tentative", note: "might be late" });
+  });
+});

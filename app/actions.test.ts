@@ -7,7 +7,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 const auth = vi.fn();
 vi.mock("@/auth", () => ({ auth: () => auth() }));
 
-const { setWeekAvailability, updateAvailability } = await import("./actions");
+const { setWeekAvailability, updateAvailability, updateAvailabilityNote } = await import("./actions");
 const { revalidatePath } = await import("next/cache");
 
 beforeEach(async () => {
@@ -143,5 +143,67 @@ describe("time ranges", () => {
 
     const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
     expect(row.timeRange).toBeNull();
+  });
+});
+
+describe("updateAvailabilityNote", () => {
+  it("only lets a teammate note their own day", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: "someone-else" });
+
+    await expect(updateAvailabilityNote(teammate.id, DATES[0], "late")).rejects.toThrow(
+      "You can only edit your own availability.",
+    );
+  });
+
+  it("adds a trimmed note to a day with no availability yet, leaving it Not set", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await updateAvailabilityNote(teammate.id, DATES[0], "  might be late  ");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.note).toBe("might be late");
+    expect(row.status).toBe("not-set");
+  });
+
+  it("keeps the day's status and range when changing its note", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+    await updateAvailability(teammate.id, DATES[0], "available", "6pm-11pm");
+
+    await updateAvailabilityNote(teammate.id, DATES[0], "on mobile data");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row).toMatchObject({ status: "available", timeRange: "6PM–11PM", note: "on mobile data" });
+  });
+
+  it("clears a blank note", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+    await updateAvailabilityNote(teammate.id, DATES[0], "late");
+
+    await updateAvailabilityNote(teammate.id, DATES[0], "   ");
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.note).toBeNull();
+  });
+
+  it("rejects a note longer than 60 characters", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+
+    await expect(updateAvailabilityNote(teammate.id, DATES[0], "x".repeat(61))).rejects.toThrow(/60/);
+  });
+
+  it("keeps the note when the status changes", async () => {
+    const teammate = await makeTeammate();
+    auth.mockResolvedValue({ teammateId: teammate.id });
+    await updateAvailabilityNote(teammate.id, DATES[0], "late");
+
+    await updateAvailability(teammate.id, DATES[0], "tentative", null);
+
+    const row = await testDb.availability.findFirstOrThrow({ where: { teammateId: teammate.id } });
+    expect(row.note).toBe("late");
   });
 });
