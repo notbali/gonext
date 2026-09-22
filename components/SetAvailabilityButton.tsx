@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { setWeekAvailability } from "@/app/actions";
+import { normalizeTimeRange } from "@/lib/time-range";
 import { Modal } from "@/components/Modal";
 import { useToast } from "@/components/ToastProvider";
 
@@ -25,9 +26,21 @@ export function SetAvailabilityButton({
   const router = useRouter();
 
   function apply() {
+    // Validated here as well as on the server, since Next.js hides a server
+    // action's error message in production builds.
+    let range: string | null = null;
+    if (status === "available") {
+      try {
+        range = normalizeTimeRange(timeRange);
+      } catch (err) {
+        addToast({ message: (err as Error).message, variant: "error" });
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
-        await setWeekAvailability(teammateId, dateISOs, status, timeRange || null);
+        await setWeekAvailability(teammateId, dateISOs, status, range);
       } catch (err) {
         addToast({
           message: err instanceof Error ? err.message : "Something went wrong.",

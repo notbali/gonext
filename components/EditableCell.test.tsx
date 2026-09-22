@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { EditableCell } from "./EditableCell";
 import { ToastProvider } from "./ToastProvider";
 
-function Wrapper(props: { status: "available" | "tentative" | "unavailable" | "not-set"; timeRange?: string }) {
+function Wrapper(props: { status: "available" | "tentative" | "unavailable" | "not-set"; timeRange?: string; note?: string }) {
   return (
     <ToastProvider>
       <EditableCell teammateId="t1" dateISO="2026-09-14T00:00:00.000Z" {...props} />
@@ -13,8 +13,10 @@ function Wrapper(props: { status: "available" | "tentative" | "unavailable" | "n
 }
 
 const mockUpdateAvailability = vi.fn();
+const mockUpdateAvailabilityNote = vi.fn();
 vi.mock("@/app/actions", () => ({
   updateAvailability: (...args: unknown[]) => mockUpdateAvailability(...args),
+  updateAvailabilityNote: (...args: unknown[]) => mockUpdateAvailabilityNote(...args),
 }));
 
 const mockRefresh = vi.fn();
@@ -105,5 +107,86 @@ describe("EditableCell option labels", () => {
       ["tentative", "Maybe"],
       ["unavailable", "Out"],
     ]);
+  });
+});
+
+describe("time range validation", () => {
+  beforeEach(() => {
+    mockUpdateAvailability.mockReset();
+    mockRefresh.mockReset();
+  });
+
+  it("rejects an unreadable time range before saving, reverting the input and explaining why", async () => {
+    render(<Wrapper status="available" timeRange="6PM–9PM" />);
+    const input = screen.getByPlaceholderText(/all day/i);
+
+    fireEvent.change(input, { target: { value: "after work" } });
+    fireEvent.blur(input);
+
+    expect(mockUpdateAvailability).not.toHaveBeenCalled();
+    expect(await screen.findByText(/couldn't read the time range/i)).toBeInTheDocument();
+    expect(input).toHaveValue("6PM–9PM");
+  });
+
+  it("shows the canonical form of a range as soon as it's saved", async () => {
+    mockUpdateAvailability.mockResolvedValue(undefined);
+    render(<Wrapper status="available" />);
+    const input = screen.getByPlaceholderText(/all day/i);
+
+    fireEvent.change(input, { target: { value: "7-11pm" } });
+    fireEvent.blur(input);
+
+    expect(input).toHaveValue("7PM–11PM");
+    await waitFor(() =>
+      expect(mockUpdateAvailability).toHaveBeenCalledWith("t1", "2026-09-14T00:00:00.000Z", "available", "7PM–11PM"),
+    );
+  });
+
+  it("doesn't save when the range is unchanged on blur", () => {
+    render(<Wrapper status="available" timeRange="6PM–9PM" />);
+    fireEvent.blur(screen.getByPlaceholderText(/all day/i));
+    expect(mockUpdateAvailability).not.toHaveBeenCalled();
+  });
+});
+
+describe("EditableCell notes", () => {
+  beforeEach(() => {
+    mockUpdateAvailabilityNote.mockReset().mockResolvedValue(undefined);
+    mockRefresh.mockReset();
+  });
+
+  it("hides the note field behind a button until there's a note", () => {
+    render(<Wrapper status="tentative" />);
+    expect(screen.queryByPlaceholderText(/note/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /add note/i }));
+    expect(screen.getByPlaceholderText(/note/i)).toHaveFocus();
+  });
+
+  it("shows an existing note ready to edit", () => {
+    render(<Wrapper status="tentative" note="late" />);
+    expect(screen.getByPlaceholderText(/note/i)).toHaveValue("late");
+  });
+
+  it("saves the note on blur", async () => {
+    render(<Wrapper status="tentative" />);
+    fireEvent.click(screen.getByRole("button", { name: /add note/i }));
+    const input = screen.getByPlaceholderText(/note/i);
+    fireEvent.change(input, { target: { value: "might be late" } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(mockUpdateAvailabilityNote).toHaveBeenCalledWith("t1", "2026-09-14T00:00:00.000Z", "might be late"),
+    );
+  });
+
+  it("doesn't save an unchanged note", () => {
+    render(<Wrapper status="tentative" note="late" />);
+    fireEvent.blur(screen.getByPlaceholderText(/note/i));
+    expect(mockUpdateAvailabilityNote).not.toHaveBeenCalled();
+  });
+
+  it("caps the note at 60 characters", () => {
+    render(<Wrapper status="tentative" note="late" />);
+    expect(screen.getByPlaceholderText(/note/i)).toHaveAttribute("maxLength", "60");
   });
 });

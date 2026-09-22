@@ -1,25 +1,40 @@
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { AccessGate } from "@/components/AccessGate";
 import { PageContainer } from "@/components/PageContainer";
 import { MatchEditor } from "@/components/MatchEditor";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
+import { CalendarSubscribeCard } from "@/components/CalendarSubscribeCard";
+import { MatchResultPicker } from "@/components/MatchResultPicker";
+import { RecordCard } from "@/components/RecordCard";
+import { BestTimesCard } from "@/components/BestTimesCard";
+import { suggestMatchTimes } from "@/lib/best-times";
+import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
+import { summarizeRecord, type MatchResultValue } from "@/lib/match-record";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
 import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { mapForWeek } from "@/lib/week-schedule";
-import { WEEKS_AHEAD } from "@/lib/schedule-data";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
-type MatchRow = { id: string; date: Date; isPlayoffs: boolean; map: string | null };
+type MatchRow = {
+  id: string;
+  date: Date;
+  isPlayoffs: boolean;
+  map: string | null;
+  result: MatchResultValue | null;
+};
 
 function MatchList({
   title,
   matches,
   isCoach,
+  showResults = false,
 }: {
   title: string;
   matches: MatchRow[];
   isCoach: boolean;
+  showResults?: boolean;
 }) {
   return (
     <div className="mt-6">
@@ -39,9 +54,12 @@ function MatchList({
               >
                 {matchDateLine(m, label)}
               </p>
-              {isCoach && (
-                <MatchEditor matchId={m.id} date={m.date} isPlayoffs={m.isPlayoffs} map={m.map} />
-              )}
+              <div className="flex shrink-0 items-center gap-4">
+                {showResults && <MatchResultPicker matchId={m.id} result={m.result} canEdit={isCoach} />}
+                {isCoach && (
+                  <MatchEditor matchId={m.id} date={m.date} isPlayoffs={m.isPlayoffs} map={m.map} />
+                )}
+              </div>
             </div>
           );
         })}
@@ -73,6 +91,7 @@ export default async function MatchesPage() {
     date: m.date,
     isPlayoffs: m.isPlayoffs,
     map: m.isPlayoffs ? null : mapForWeek(weekMaps, m.date),
+    result: m.result,
   });
   const upcoming = team.matches.filter((m) => m.date >= now).map(toRow);
   const past = team.matches
@@ -83,6 +102,16 @@ export default async function MatchesPage() {
   if (!session?.teammateId) {
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
+
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const proto = requestHeaders.get("x-forwarded-proto") ?? "https";
+  const feedUrl = `${proto}://${host}/api/calendar/${team.calendarToken}`;
+
+  // Two weeks is far enough ahead for a Premier schedule; beyond that little is set.
+  const today = nowInTeamTimezone();
+  const schedule = isCoach ? await getScheduleData(today, now, db, 2) : null;
+  const suggestions = schedule ? suggestMatchTimes(schedule.teammates, schedule.weekDates, today) : [];
 
   const weeks = chunkIntoWeeks(getLookaheadDates(nowInTeamTimezone(), WEEKS_AHEAD)).map((weekDates) => ({
     weekDates,
@@ -101,8 +130,12 @@ export default async function MatchesPage() {
       ) : (
         <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
       )}
-      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} />}
+      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} showResults />}
+      <RecordCard record={summarizeRecord(past)} />
 
+      <CalendarSubscribeCard feedUrl={feedUrl} />
+
+      {isCoach && <BestTimesCard suggestions={suggestions} />}
       {isCoach && <CreateMatchForm action={createMatch} />}
       {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
     </PageContainer>

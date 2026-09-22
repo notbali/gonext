@@ -116,3 +116,36 @@ describe("MatchesCard touch targets", () => {
     expect(screen.getByRole("link", { name: "View all" })).toHaveClass("tap-target");
   });
 });
+
+describe("MatchesCard short-handed warning", () => {
+  const today = new Date(2026, 8, 7);
+  const squad = (available: number): Teammate[] =>
+    Array.from({ length: 6 }, (_, i) => ({
+      id: `t${i}`,
+      name: `T${i}`,
+      avatarUrl: null,
+      week: weekDates.map(() => ({ status: i < available ? ("available" as const) : ("unavailable" as const) })),
+    }));
+
+  it("says how many more players are needed when fewer than five are confirmed", () => {
+    render(<MatchesCard matches={[match({})]} teammates={squad(3)} weekDates={weekDates} today={today} />);
+    expect(screen.getByTestId("match-short")).toHaveTextContent(/need 2 more/i);
+  });
+
+  it("shows no warning once five are confirmed", () => {
+    render(<MatchesCard matches={[match({})]} teammates={squad(5)} weekDates={weekDates} today={today} />);
+    expect(screen.queryByTestId("match-short")).not.toBeInTheDocument();
+  });
+
+  it("shows no warning before availability is collected for the match", () => {
+    render(
+      <MatchesCard
+        matches={[match({ availabilityCollected: false })]}
+        teammates={squad(0)}
+        weekDates={weekDates}
+        today={today}
+      />,
+    );
+    expect(screen.queryByTestId("match-short")).not.toBeInTheDocument();
+  });
+});

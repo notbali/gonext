@@ -12,6 +12,7 @@ export const testDb = new PrismaClient({ adapter });
 /** Wipes all domain rows between tests, cheapest-first so FK order doesn't matter. */
 export async function resetTestDb() {
   await testDb.availability.deleteMany();
+  await testDb.weeklyDefault.deleteMany();
   await testDb.match.deleteMany();
   await testDb.weekMap.deleteMany();
   await testDb.teammate.deleteMany();

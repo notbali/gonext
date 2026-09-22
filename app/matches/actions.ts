@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { easternPartsToUtc, getWeekStart } from "@/lib/dates";
-import type { ValorantMap } from "@/lib/generated/prisma/client";
+import type { MatchResult, ValorantMap } from "@/lib/generated/prisma/client";
 
 const MAX_MATCHES_PER_WEEK = 2;
 
@@ -100,4 +100,20 @@ export async function setWeekMap(weekStartISO: string, map: ValorantMap) {
 
   revalidatePath("/matches");
   revalidatePath("/");
+}
+
+/** Records how a played match went; `null` clears it. */
+export async function setMatchResult(matchId: string, result: MatchResult | null) {
+  await requireCoach();
+  if (result !== null && result !== "WIN" && result !== "LOSS") {
+    throw new Error("A match result must be a win or a loss.");
+  }
+
+  const match = await db.match.findUniqueOrThrow({ where: { id: matchId } });
+  if (result && match.date > new Date()) {
+    throw new Error("That match hasn't been played yet.");
+  }
+
+  await db.match.update({ where: { id: matchId }, data: { result } });
+  revalidatePath("/matches");
 }

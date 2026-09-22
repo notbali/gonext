@@ -173,3 +173,56 @@ describe("getScheduleData", () => {
     expect(schedule!.playoffsMatch).toBeNull();
   });
 });
+
+describe("getScheduleData notes", () => {
+  it("carries a day's note through", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice");
+    await testDb.availability.create({
+      data: { teammateId: alice.id, date: new Date(2026, 7, 31), status: "tentative", note: "might be late" },
+    });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.teammates[0].week[0]).toEqual({ status: "tentative", note: "might be late" });
+  });
+});
+
+describe("getScheduleData weekly defaults", () => {
+  it("fills a day with no entry from the teammate's default for that weekday", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice");
+    // dayOfWeek 1 = Tuesday; REFERENCE's week starts Mon Aug 31, so Tue Sep 1 is index 1.
+    await testDb.weeklyDefault.create({ data: { teammateId: alice.id, dayOfWeek: 1, status: "available", timeRange: "7PM–11PM" } });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+    const week = schedule!.teammates[0].week;
+
+    expect(week[1]).toEqual({ status: "available", timeRange: "7PM–11PM", fromDefault: true });
+    expect(week[8]).toEqual({ status: "available", timeRange: "7PM–11PM", fromDefault: true }); // next Tuesday
+    expect(week[2]).toEqual({ status: "not-set" });
+  });
+
+  it("lets an explicit entry for the day win over the default", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice");
+    await testDb.weeklyDefault.create({ data: { teammateId: alice.id, dayOfWeek: 1, status: "available" } });
+    await testDb.availability.create({ data: { teammateId: alice.id, date: new Date(2026, 8, 1), status: "unavailable" } });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.teammates[0].week[1]).toMatchObject({ status: "unavailable" });
+    expect(schedule!.teammates[0].week[1].fromDefault).toBeUndefined();
+  });
+
+  it("uses the default for a day whose entry was set back to Not set but carries a note", async () => {
+    const team = await makeTeam();
+    const alice = await makeTeammate(team.id, "Alice");
+    await testDb.weeklyDefault.create({ data: { teammateId: alice.id, dayOfWeek: 1, status: "available" } });
+    await testDb.availability.create({ data: { teammateId: alice.id, date: new Date(2026, 8, 1), status: "not-set", note: "late" } });
+
+    const schedule = await getScheduleData(REFERENCE, TODAY, testDb);
+
+    expect(schedule!.teammates[0].week[1]).toEqual({ status: "available", note: "late", fromDefault: true });
+  });
+});

@@ -64,6 +64,9 @@ model Team {
   division    String
   // Shareable join link token. Regenerating it invalidates the old link.
   inviteToken String     @unique @default(cuid())
+  // Secret in the match calendar feed's URL (/api/calendar/{token}). Separate
+  // from inviteToken so subscribing a calendar can't leak the join link.
+  calendarToken String   @unique @default(cuid())
   teammates   Teammate[]
   matches     Match[]
   weekMaps    WeekMap[]
@@ -83,7 +86,8 @@ model Teammate {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  availability Availability[]
+  availability   Availability[]
+  weeklyDefaults WeeklyDefault[]
 }
 
 model Match {
@@ -92,6 +96,8 @@ model Match {
   // The season's single tournament-style match, run as a bracket rather than
   // on that week's assigned Map — see WeekMap.
   isPlayoffs Boolean  @default(false)
+  // Recorded by a Coach once the match has been played; null until then.
+  result     MatchResult?
 
   teamId String
   team   Team   @relation(fields: [teamId], references: [id])
@@ -114,6 +120,11 @@ model WeekMap {
   @@unique([teamId, weekStart])
 }
 
+enum MatchResult {
+  WIN
+  LOSS
+}
+
 enum ValorantMap {
   ASCENT
   BIND
@@ -134,9 +145,27 @@ model Availability {
   date   DateTime
   status String
   timeRange String?
+  // A short free-text aside for the day (e.g. "might be late"), up to 60 chars.
+  note      String?
 
   teammateId String
   teammate   Teammate @relation(fields: [teammateId], references: [id])
 
   @@unique([teammateId, date])
+}
+
+// A Teammate's usual Availability for a weekday. Never copied into Availability
+// rows: a day with no entry of its own (or one set back to Not set) falls back
+// to this when the schedule is read, so changing a default updates every such day.
+model WeeklyDefault {
+  id        String  @id @default(cuid())
+  // 0 = Monday ... 6 = Sunday, matching the schedule's Monday-first weeks.
+  dayOfWeek Int
+  status    String
+  timeRange String?
+
+  teammateId String
+  teammate   Teammate @relation(fields: [teammateId], references: [id], onDelete: Cascade)
+
+  @@unique([teammateId, dayOfWeek])
 }

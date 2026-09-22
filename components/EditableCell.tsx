@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
-import { updateAvailability } from "@/app/actions";
+import { updateAvailability, updateAvailabilityNote } from "@/app/actions";
+import { normalizeTimeRange } from "@/lib/time-range";
 import { useToast } from "@/components/ToastProvider";
 
 const CELL_STYLES: Record<AvailabilityStatus, string> = {
@@ -34,18 +35,26 @@ export function EditableCell({
   dateISO,
   status,
   timeRange,
+  note,
 }: {
   teammateId: string;
   dateISO: string;
   status: AvailabilityStatus;
   timeRange?: string;
+  note?: string;
 }) {
   const [localStatus, setLocalStatus] = useState(status);
   const [localRange, setLocalRange] = useState(timeRange ?? "");
+  // The range as last saved, so a blur with no real edit doesn't re-save.
+  const [savedRange, setSavedRange] = useState(timeRange ?? "");
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
   const router = useRouter();
+  const [localNote, setLocalNote] = useState(note ?? "");
+  const [savedNote, setSavedNote] = useState(note ?? "");
+  const [noteOpen, setNoteOpen] = useState(Boolean(note));
+  const noteInputRef = useRef<HTMLInputElement>(null);
 
   // Picks up changes made elsewhere (e.g. a bulk edit) once the server data
   // revalidates and this cell re-renders with new props. Skipped while a save
@@ -54,14 +63,25 @@ export function EditableCell({
   // commit — see https://react.dev/learn/you-might-not-need-an-effect.
   const [prevStatus, setPrevStatus] = useState(status);
   const [prevTimeRange, setPrevTimeRange] = useState(timeRange);
+  const [prevNote, setPrevNote] = useState(note);
+  if (note !== prevNote) {
+    setPrevNote(note);
+    setSavedNote(note ?? "");
+    if (!isPending) setLocalNote(note ?? "");
+  }
   if (status !== prevStatus || timeRange !== prevTimeRange) {
     setPrevStatus(status);
     setPrevTimeRange(timeRange);
+    setSavedRange(timeRange ?? "");
     if (!isPending) {
       setLocalStatus(status);
       setLocalRange(timeRange ?? "");
     }
   }
+
+  useEffect(() => {
+    if (noteOpen && !savedNote) noteInputRef.current?.focus();
+  }, [noteOpen, savedNote]);
 
   useEffect(() => {
     if (lockState === "idle") return;
@@ -97,8 +117,47 @@ export function EditableCell({
       } catch {
         // ignore
       }
+      setSavedRange(nextRange);
       setLockState("committed");
     });
+  }
+
+  function commitNote() {
+    const next = localNote.trim();
+    if (next === savedNote) return;
+    startTransition(async () => {
+      try {
+        await updateAvailabilityNote(teammateId, dateISO, next);
+      } catch (err) {
+        setLocalNote(savedNote);
+        setLockState("conflict");
+        addToast({ message: err instanceof Error ? err.message : "Couldn't save that note.", variant: "error" });
+        return;
+      }
+      try {
+        router.refresh();
+      } catch {
+        // ignore
+      }
+      setSavedNote(next);
+      setLockState("committed");
+    });
+  }
+
+  // Validated here as well as on the server, since Next.js hides a server
+  // action's error message in production builds.
+  function commitRange() {
+    let normalized: string;
+    try {
+      normalized = normalizeTimeRange(localRange) ?? "";
+    } catch (err) {
+      setLocalRange(savedRange);
+      setLockState("conflict");
+      addToast({ message: (err as Error).message, variant: "error" });
+      return;
+    }
+    setLocalRange(normalized);
+    if (normalized !== savedRange) save(localStatus, normalized);
   }
 
   return (
@@ -128,9 +187,30 @@ export function EditableCell({
           disabled={isPending}
           placeholder="All day"
           onChange={(e) => setLocalRange(e.target.value)}
-          onBlur={() => save(localStatus, localRange)}
+          onBlur={commitRange}
           className="w-full rounded border border-border bg-surface-raised px-1 py-0.5 text-center font-mono text-[10px] text-text-primary placeholder:text-text-dim disabled:opacity-60"
         />
+      )}
+      {noteOpen ? (
+        <input
+          ref={noteInputRef}
+          value={localNote}
+          maxLength={60}
+          disabled={isPending}
+          placeholder="Note"
+          aria-label="Note"
+          onChange={(e) => setLocalNote(e.target.value)}
+          onBlur={commitNote}
+          className="w-full rounded border border-border bg-surface-raised px-1 py-0.5 text-center text-[10px] italic text-text-primary placeholder:text-text-dim disabled:opacity-60"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setNoteOpen(true)}
+          className="font-mono text-[10px] text-text-dim hover:text-text-muted"
+        >
+          + Add note
+        </button>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { countdownLabel, matchDateLine, minutesUntil } from "@/lib/dates";
 import { getConfirmedTeammates } from "@/lib/matches";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
+import { MATCH_READY_THRESHOLD } from "@/lib/schedule-column-state";
 
 const ENTRANCE_STAGGER_MS = 70;
 const URGENCY_WINDOW_MINUTES = 60;
@@ -29,6 +30,7 @@ function MatchItem({
   const minutesOut = minutesUntil(match.date, today);
   const isUrgent = minutesOut >= 0 && minutesOut <= URGENCY_WINDOW_MINUTES;
   const label = match.isPlayoffs ? "PLAYOFFS" : (match.map ?? "MAP TBD");
+  const playersShort = MATCH_READY_THRESHOLD - confirmed.length;
 
   return (
     <div
@@ -75,6 +77,14 @@ function MatchItem({
           <span className="ml-1 font-mono text-caption font-semibold uppercase tracking-wide text-text-muted">
             {confirmed.length}/{teammates.length} confirmed
           </span>
+          {playersShort > 0 && (
+            <span
+              data-testid="match-short"
+              className="ml-auto shrink-0 font-mono text-caption font-semibold uppercase tracking-wide text-warning"
+            >
+              Need {playersShort} more
+            </span>
+          )}
         </div>
       ) : (
         <p className="mt-3 font-mono text-caption uppercase tracking-wide text-text-dim">

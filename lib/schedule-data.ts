@@ -1,5 +1,5 @@
 import { db as defaultDb } from "@/lib/db";
-import { getLookaheadDates, isSameDate } from "@/lib/dates";
+import { getLookaheadDates, isOnTeamDay, isSameDate } from "@/lib/dates";
 import { mapForWeek } from "@/lib/week-schedule";
 import type { Match as PrismaMatch, PrismaClient } from "@/lib/generated/prisma/client";
 import type { AvailabilityStatus, DayAvailability, Match, Teammate, WeekMapInfo } from "@/lib/types";
@@ -39,7 +39,7 @@ export async function getScheduleData(
     include: {
       teammates: {
         where: { active: true },
-        include: { availability: true, user: true },
+        include: { availability: true, weeklyDefaults: true, user: true },
         orderBy: { order: "asc" },
       },
       matches: { orderBy: { date: "asc" } },
@@ -57,11 +57,20 @@ export async function getScheduleData(
     avatarUrl: t.user.image,
     week: weekDates.map((date): DayAvailability => {
       const record = t.availability.find((a) => isSameDate(a.date, date));
-      if (!record) return { status: "not-set" };
-      return {
-        status: record.status as AvailabilityStatus,
-        timeRange: record.timeRange ?? undefined,
-      };
+      const note = record?.note ?? undefined;
+      if (record && record.status !== "not-set") {
+        return { status: record.status as AvailabilityStatus, timeRange: record.timeRange ?? undefined, note };
+      }
+      const fallback = t.weeklyDefaults.find((d) => d.dayOfWeek === (date.getDay() + 6) % 7);
+      if (fallback) {
+        return {
+          status: fallback.status as AvailabilityStatus,
+          timeRange: fallback.timeRange ?? undefined,
+          note,
+          fromDefault: true,
+        };
+      }
+      return { status: "not-set", note };
     }),
   }));
 
@@ -76,7 +85,7 @@ export async function getScheduleData(
       date: m.date,
       isPlayoffs: m.isPlayoffs,
       map: m.isPlayoffs ? null : mapForWeek(weekMaps, m.date),
-      availabilityCollected: weekDates.some((d) => isSameDate(d, m.date)),
+      availabilityCollected: weekDates.some((d) => isOnTeamDay(m.date, d)),
     };
   }
 

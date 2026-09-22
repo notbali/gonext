@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { dateRangeLabel } from "@/lib/dates";
 import { SetAvailabilityButton } from "@/components/SetAvailabilityButton";
+import { WeeklyDefaultsButton } from "@/components/WeeklyDefaultsButton";
+import type { WeeklyDefaultEntry } from "@/lib/types";
 
 /** A week-nav arrow: a link when navigable, a disabled marker at a boundary. */
 function NavArrow({
@@ -43,11 +45,13 @@ export function PageHeader({
   weekOffset,
   weekCount,
   myTeammateId,
+  myDefaults = [],
 }: {
   weekDates: Date[];
   weekOffset: number;
   weekCount: number;
   myTeammateId: string;
+  myDefaults?: WeeklyDefaultEntry[];
 }) {
   const isCurrentRange = weekOffset === 0;
   const isAtEarliest = weekOffset <= 0;
@@ -99,6 +103,7 @@ export function PageHeader({
           dateISOs={weekDates.map((d) => d.toISOString())}
           rangeLabel={rangeLabel}
         />
+        <WeeklyDefaultsButton teammateId={myTeammateId} defaults={myDefaults} />
       </div>
     </div>
   );

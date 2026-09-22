@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { AvailabilityGrid } from "./AvailabilityGrid";
 import type { Teammate } from "@/lib/types";
 import { VALORANT_MAPS } from "@/lib/valorant-maps";
+import { easternPartsToUtc } from "@/lib/dates";
 
 vi.mock("@/app/actions", () => ({
   updateAvailability: vi.fn().mockResolvedValue(undefined),
@@ -385,5 +386,37 @@ describe("AvailabilityGrid mobile layout", () => {
       expect(cell).toHaveClass("px-3", "md:px-4");
       expect(cell).not.toHaveClass("px-4");
     });
+  });
+});
+
+describe("AvailabilityGrid match placement", () => {
+  it("puts a late-evening Eastern match under its Eastern day, not the next UTC day", () => {
+    // 9PM EDT Wednesday Sep 16 is already Thursday in UTC, where the server runs.
+    const match = {
+      id: "m1",
+      date: easternPartsToUtc({ year: 2026, month: 8, day: 16, hours: 21, minutes: 0 }),
+      isPlayoffs: false,
+      map: null,
+      availabilityCollected: true,
+    };
+
+    render(<AvailabilityGrid weekDates={weekDates} teammates={teammates} matches={[match]} />);
+
+    const headerCells = screen.getAllByTestId("grid-column-header");
+    expect(headerCells[2]).toHaveTextContent(/match 9P/i);
+    expect(headerCells[3]).not.toHaveTextContent(/match/i);
+  });
+});
+
+describe("AvailabilityGrid notes", () => {
+  it("shows another teammate's note on their cell", () => {
+    const withNote: Teammate[] = [
+      { ...teammates[0], week: weekDates.map((_, i) => (i === 0 ? { status: "tentative" as const, note: "might be late" } : { status: "not-set" as const })) },
+    ];
+    render(<AvailabilityGrid weekDates={weekDates} teammates={withNote} matches={[]} />);
+
+    const note = screen.getByTestId("cell-note");
+    expect(note).toHaveTextContent("might be late");
+    expect(note).toHaveAttribute("title", "might be late");
   });
 });
