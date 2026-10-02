@@ -16,6 +16,7 @@ import { WeekMapEditor } from "@/components/WeekMapEditor";
 import { chunkIntoWeeks, getEasternParts, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { getSeason, isHalloweenNight, type Season } from "@/lib/season";
 import { HalloweenBadge } from "@/components/MatchesCard";
+import { LocalMatchTime } from "@/components/LocalMatchTime";
 import { mapForWeek } from "@/lib/week-schedule";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
@@ -59,6 +60,7 @@ function MatchList({
                 >
                   {matchDateLine(m, label)}
                 </p>
+                <LocalMatchTime date={m.date} className="mt-1" />
                 {season === "halloween" && isHalloweenNight(m.date) && <HalloweenBadge />}
               </div>
               <div className="flex shrink-0 items-center gap-4">

@@ -11,6 +11,7 @@ import {
   minutesUntil,
   nowInTeamTimezone,
   parseWeekOffset,
+  preciseCountdown,
   shortTimeLabel,
 } from "./dates";
 
@@ -250,5 +251,30 @@ describe("countdownLabel across UTC midnight", () => {
     const match = easternPartsToUtc({ year: 2026, month: 8, day: 23, hours: 19, minutes: 0 });
     const now = easternPartsToUtc({ year: 2026, month: 8, day: 22, hours: 21, minutes: 0 });
     expect(countdownLabel(match, now, weekDates)).toBe("TOMORROW");
+  });
+});
+
+describe("preciseCountdown", () => {
+  const start = new Date("2026-09-24T00:00:00.000Z");
+  const before = (minutes: number) => new Date(start.getTime() - minutes * 60_000);
+
+  it("counts days and hours when a day or more out", () => {
+    expect(preciseCountdown(start, before((2 * 24 + 4) * 60 + 30))).toBe("IN 2D 4H");
+    expect(preciseCountdown(start, before(24 * 60))).toBe("IN 1D");
+  });
+
+  it("counts hours and minutes within a day", () => {
+    expect(preciseCountdown(start, before(3 * 60 + 12))).toBe("IN 3H 12M");
+    expect(preciseCountdown(start, before(5 * 60))).toBe("IN 5H");
+  });
+
+  it("counts minutes within the hour, never showing zero before the start", () => {
+    expect(preciseCountdown(start, before(12))).toBe("IN 12M");
+    expect(preciseCountdown(start, new Date(start.getTime() - 20_000))).toBe("IN 1M");
+  });
+
+  it("is LIVE from the start", () => {
+    expect(preciseCountdown(start, start)).toBe("LIVE");
+    expect(preciseCountdown(start, before(-45))).toBe("LIVE");
   });
 });

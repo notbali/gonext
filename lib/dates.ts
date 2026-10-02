@@ -243,3 +243,20 @@ export function countdownLabel(matchDate: Date, today: Date, weekDates: Date[]):
 
   return "NEXT WEEK";
 }
+
+/**
+ * A ticking countdown to `matchDate`, e.g. "IN 2D 4H", "IN 3H 12M", "IN 12M",
+ * then "LIVE" once it has started. Rounds up, so it never reads "IN 0M" early.
+ */
+export function preciseCountdown(matchDate: Date, now: Date): string {
+  const totalMinutes = Math.ceil((matchDate.getTime() - now.getTime()) / 60_000);
+  if (totalMinutes <= 0) return "LIVE";
+
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) return hours > 0 ? `IN ${days}D ${hours}H` : `IN ${days}D`;
+  if (hours > 0) return minutes > 0 ? `IN ${hours}H ${minutes}M` : `IN ${hours}H`;
+  return `IN ${minutes}M`;
+}
