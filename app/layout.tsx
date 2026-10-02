@@ -35,7 +35,7 @@ export const viewport: Viewport = appViewport;
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [session, team] = await Promise.all([
     auth(),
-    db.team.findFirst({ select: { division: true } }),
+    db.team.findFirst({ select: { id: true } }),
   ]);
 
   const today = new Date();
@@ -65,8 +65,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <ToastProvider>
             {team && (
               <TopNav
-                teamDivision={team.division}
-                isSignedIn={Boolean(session?.user)}
+                  isSignedIn={Boolean(session?.user)}
                 userName={session?.user?.name}
                 userImage={session?.user?.image}
                 isAdmin={session?.isAdmin ?? false}

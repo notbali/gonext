@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 function renderNav(props: Partial<Parameters<typeof TopNav>[0]> = {}) {
-  return render(<TopNav teamDivision="Platinum 2" isSignedIn={true} userName="Alice" {...props} />);
+  return render(<TopNav isSignedIn={true} userName="Alice" {...props} />);
 }
 
 describe("TopNav on narrow screens", () => {
@@ -44,12 +44,11 @@ describe("TopNav on narrow screens", () => {
     expect(tagline).toHaveClass("lg:inline");
   });
 
-  it("hides the division pill below sm so the brand row and login/avatar fit on one line", () => {
+  it("has no team division pill", () => {
     renderNav();
 
-    const pill = screen.getByText("Platinum 2").parentElement as HTMLElement;
-    expect(pill).toHaveClass("hidden", "sm:flex");
-    expect(pill).not.toHaveClass("flex");
+    expect(screen.queryByText(/DIV \d|GROUP/i)).toBeNull();
+    expect(screen.getByRole("banner").querySelector(".bg-primary.rounded-full")).toBeNull();
   });
 
   it("shortens the sign-in button to 'Log in' below sm while keeping its full accessible name", () => {
