@@ -262,4 +262,53 @@ describe("EditableCell notes", () => {
       expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
     });
   });
+
+  describe("keyboard", () => {
+    beforeEach(() => {
+      mockUpdateAvailability.mockReset();
+      mockUpdateAvailability.mockResolvedValue(undefined);
+    });
+
+    it.each([
+      ["1", "available"],
+      ["2", "tentative"],
+      ["3", "unavailable"],
+      ["0", "not-set"],
+    ])("sets the day with the %s key", async (key, status) => {
+      renderCell({ status: key === "0" ? "available" : "not-set" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key });
+
+      await waitFor(() => expect(mockUpdateAvailability).toHaveBeenCalledWith("t1", "2026-09-14T00:00:00.000Z", status, null));
+      expect(screen.getByRole("combobox")).toHaveValue(status);
+    });
+
+    it("doesn't re-save when the key matches the current status", () => {
+      renderCell({ status: "tentative" });
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "2" });
+      expect(mockUpdateAvailability).not.toHaveBeenCalled();
+    });
+
+    it("moves between the day cells with the left and right arrows, stopping at either end", () => {
+      render(
+        <ToastProvider>
+          <EditableCell teammateId="t1" dateISO="2026-09-14T00:00:00.000Z" status="not-set" />
+          <EditableCell teammateId="t1" dateISO="2026-09-15T00:00:00.000Z" status="not-set" />
+        </ToastProvider>,
+      );
+      const [mon, tue] = screen.getAllByRole("combobox");
+      mon.focus();
+
+      fireEvent.keyDown(mon, { key: "ArrowRight" });
+      expect(tue).toHaveFocus();
+      fireEvent.keyDown(tue, { key: "ArrowRight" });
+      expect(tue).toHaveFocus();
+      fireEvent.keyDown(tue, { key: "ArrowLeft" });
+      expect(mon).toHaveFocus();
+    });
+
+    it("tells a mouse user the shortcuts", () => {
+      renderCell({ status: "not-set" });
+      expect(screen.getByRole("combobox")).toHaveAttribute("title", expect.stringMatching(/1.*2.*3.*0/));
+    });
+  });
 });

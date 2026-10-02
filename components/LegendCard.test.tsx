@@ -16,4 +16,11 @@ describe("LegendCard", () => {
     expect(screen.getByText("Tentative").parentElement).toHaveTextContent("Tentative · Ghost?");
     expect(screen.getByText("Unavailable").parentElement).toHaveTextContent("Unavailable · RIP");
   });
+
+  it("lists the grid's keyboard shortcuts, for pointer devices only", () => {
+    render(<LegendCard />);
+    const hint = screen.getByTestId("legend-shortcuts");
+    expect(hint).toHaveTextContent(/1.*2.*3.*0/);
+    expect(hint.className).toContain("pointer-coarse:hidden");
+  });
 });

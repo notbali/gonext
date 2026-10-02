@@ -8,6 +8,10 @@ const LEGEND_ITEMS: { status: AvailabilityStatus; label: string; swatch: string 
   { status: "not-set", label: "Not set", swatch: "bg-border" },
 ];
 
+function Kbd({ children }: { children: string }) {
+  return <kbd className="rounded border border-border px-1 text-text-muted">{children}</kbd>;
+}
+
 export function LegendCard({ season = null }: { season?: Season }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
@@ -28,6 +32,12 @@ export function LegendCard({ season = null }: { season?: Season }) {
           );
         })}
       </div>
+      <p
+        data-testid="legend-shortcuts"
+        className="mt-3 border-t border-border pt-3 font-mono text-[11px] tracking-wide text-text-dim pointer-coarse:hidden"
+      >
+        Your row: <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd> <Kbd>0</Kbd> set · <Kbd>←</Kbd> <Kbd>→</Kbd> move
+      </p>
     </div>
   );
 }

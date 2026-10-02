@@ -26,6 +26,24 @@ const CELL_OPTION_LABELS: Partial<Record<AvailabilityStatus, string>> = {
 
 type LockState = "idle" | "committed" | "conflict";
 
+/** Number keys set a day's status straight from its select, without opening it. */
+const STATUS_SHORTCUTS: Record<string, AvailabilityStatus> = {
+  "1": "available",
+  "2": "tentative",
+  "3": "unavailable",
+  "0": "not-set",
+};
+const SHORTCUT_HINT = "Keys: 1 available · 2 maybe · 3 out · 0 not set · ← → next day";
+
+/**
+ * Moves focus to the previous/next editable day (`step` -1/1) in page order,
+ * which runs across week sections too. Stays put at either end.
+ */
+function focusNeighbor(from: HTMLSelectElement, step: 1 | -1) {
+  const cells = Array.from(document.querySelectorAll<HTMLSelectElement>("select[data-cell-select]"));
+  cells[cells.indexOf(from) + step]?.focus();
+}
+
 /**
  * The cell's day, e.g. "WED SEP 23". Read from the ISO string's date part rather
  * than through `new Date`, which would shift it into the viewer's own timezone.
@@ -157,6 +175,11 @@ export function EditableCell({
     });
   }
 
+  function setStatus(next: AvailabilityStatus) {
+    setLocalStatus(next);
+    save(next, localRange);
+  }
+
   function commitNote() {
     const next = localNote.trim();
     if (next === savedNote) return;
@@ -202,13 +225,23 @@ export function EditableCell({
     >
       <select
         value={localStatus}
-        disabled={isPending}
-        onChange={(e) => {
-          const next = e.target.value as AvailabilityStatus;
-          setLocalStatus(next);
-          save(next, localRange);
+        // Not `disabled` while saving: that would drop focus and break typing a week through with the keyboard.
+        aria-busy={isPending}
+        data-cell-select
+        title={SHORTCUT_HINT}
+        onChange={(e) => setStatus(e.target.value as AvailabilityStatus)}
+        onKeyDown={(e) => {
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          const shortcut = STATUS_SHORTCUTS[e.key];
+          if (shortcut) {
+            e.preventDefault();
+            if (shortcut !== localStatus) setStatus(shortcut);
+          } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            e.preventDefault();
+            focusNeighbor(e.currentTarget, e.key === "ArrowRight" ? 1 : -1);
+          }
         }}
-        className="w-full rounded border border-border bg-surface-raised px-1 py-1 text-center font-mono text-[10px] font-semibold uppercase tracking-wide text-text-primary disabled:opacity-60"
+        className="w-full rounded border border-border bg-surface-raised px-1 py-1 text-center font-mono text-[10px] font-semibold uppercase tracking-wide text-text-primary aria-busy:opacity-60"
       >
         {AVAILABILITY_STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
