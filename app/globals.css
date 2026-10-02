@@ -31,6 +31,23 @@
   --press: 2px;
 }
 
+/* Halloween season (lib/season.ts): the root layout sets data-season on <html>
+   through October. Only raw tokens change, so every surface follows; the
+   availability colors (primary/warning/danger) keep their meaning untouched. */
+:root[data-season="halloween"] {
+  --raw-bg: #120d18;
+  --raw-surface: #1a1422;
+  --raw-surface-raised: #221a2c;
+  --raw-border: #33273f;
+  --raw-text-primary: #efe6d8;
+  --raw-text-muted: #8a7f96;
+  --raw-text-dim: #5a5066;
+
+  --raw-accent: #ff7518;
+  --raw-accent-bright: #ffa25c;
+  --raw-accent-dim: #3f2210;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --d-ui: 120ms;
@@ -256,7 +273,7 @@ body {
 
 /* Ambient HUD grain: a near-invisible scan drifting down behind the page content. */
 .ambient-grain {
-  background: linear-gradient(180deg, transparent, rgba(255, 70, 85, 0.05) 45%, transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--raw-accent) 5%, transparent) 45%, transparent);
   animation: gonext-amb var(--d-amb) linear infinite;
 }
 @keyframes gonext-amb {
@@ -270,6 +287,41 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ambient-grain {
     opacity: 0;
+  }
+}
+
+/* Halloween fog: two soft banks drifting sideways along the bottom of the
+   viewport at different speeds, so they never line up into an obvious loop. */
+.ambient-fog::before,
+.ambient-fog::after {
+  content: "";
+  position: absolute;
+  inset: 0 -50%;
+  background:
+    radial-gradient(40% 60% at 20% 100%, rgba(186, 160, 220, 0.09), transparent 70%),
+    radial-gradient(35% 50% at 65% 100%, rgba(186, 160, 220, 0.07), transparent 70%);
+  animation: gonext-fog 48s var(--e-inout) infinite alternate;
+}
+.ambient-fog::after {
+  background:
+    radial-gradient(30% 55% at 45% 100%, color-mix(in srgb, var(--raw-accent) 6%, transparent), transparent 70%),
+    radial-gradient(45% 45% at 90% 100%, rgba(186, 160, 220, 0.06), transparent 70%);
+  animation-duration: 67s;
+  animation-direction: alternate-reverse;
+}
+@keyframes gonext-fog {
+  from {
+    transform: translateX(-12%);
+  }
+  to {
+    transform: translateX(12%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* A still fog bank is fine; only the drift goes (the blanket rule above stops it). */
+  .ambient-fog::before,
+  .ambient-fog::after {
+    transform: none;
   }
 }
 
@@ -350,7 +402,7 @@ body {
   .btn-glow:hover:not(:disabled) {
     box-shadow:
       0 0 0 1px var(--color-brand),
-      0 0 22px rgba(255, 70, 85, 0.35);
+      0 0 22px color-mix(in srgb, var(--raw-accent) 35%, transparent);
   }
 }
 

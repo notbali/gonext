@@ -9,6 +9,7 @@ import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { addWeeks, nowInTeamTimezone, parseWeekOffset } from "@/lib/dates";
 import { db } from "@/lib/db";
 import type { AvailabilityStatus } from "@/lib/types";
+import { getSeason } from "@/lib/season";
 
 export default async function SchedulePage({
   searchParams,
@@ -18,6 +19,7 @@ export default async function SchedulePage({
   const { week } = await searchParams;
   const weekOffset = parseWeekOffset(week, WEEKS_AHEAD);
   const today = new Date();
+  const season = getSeason(today);
   const weekReference = addWeeks(nowInTeamTimezone(), weekOffset);
   const [session, schedule] = await Promise.all([auth(), getScheduleData(weekReference, today)]);
 
@@ -50,12 +52,13 @@ export default async function SchedulePage({
       <ScheduleLayout
         sidebar={
           <>
-            <LegendCard />
+            <LegendCard season={season} />
             <MatchesCard
               matches={schedule.matches}
               teammates={schedule.teammates}
               weekDates={schedule.weekDates}
               today={today}
+              season={season}
             />
           </>
         }
@@ -66,6 +69,7 @@ export default async function SchedulePage({
           matches={schedule.matches}
           myTeammateId={session?.teammateId}
           weekMaps={schedule.weekMaps}
+          season={season}
         />
       </ScheduleLayout>
     </div>

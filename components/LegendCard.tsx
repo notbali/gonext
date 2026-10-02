@@ -1,24 +1,43 @@
-const LEGEND_ITEMS = [
-  { label: "Available", swatch: "bg-primary" },
-  { label: "Tentative", swatch: "bg-warning" },
-  { label: "Unavailable", swatch: "bg-danger" },
-  { label: "Not set", swatch: "bg-border" },
-] as const;
+import { seasonalStatusLabel, type Season } from "@/lib/season";
+import type { AvailabilityStatus } from "@/lib/types";
 
-export function LegendCard() {
+const LEGEND_ITEMS: { status: AvailabilityStatus; label: string; swatch: string }[] = [
+  { status: "available", label: "Available", swatch: "bg-primary" },
+  { status: "tentative", label: "Tentative", swatch: "bg-warning" },
+  { status: "unavailable", label: "Unavailable", swatch: "bg-danger" },
+  { status: "not-set", label: "Not set", swatch: "bg-border" },
+];
+
+function Kbd({ children }: { children: string }) {
+  return <kbd className="rounded border border-border px-1 text-text-muted">{children}</kbd>;
+}
+
+export function LegendCard({ season = null }: { season?: Season }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
       <p className="mb-3 font-mono text-caption font-semibold uppercase tracking-widest text-text-dim">
         Legend
       </p>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-        {LEGEND_ITEMS.map((item) => (
-          <div key={item.label} className="flex items-center gap-2">
-            <span className={`h-3 w-3 rounded-sm ${item.swatch}`} />
-            <span className="text-body text-text-muted">{item.label}</span>
-          </div>
-        ))}
+        {LEGEND_ITEMS.map((item) => {
+          const seasonal = seasonalStatusLabel(item.status, season);
+          return (
+            <div key={item.label} className="flex items-center gap-2">
+              <span className={`h-3 w-3 rounded-sm ${item.swatch}`} />
+              <span className="text-body text-text-muted">
+                <span>{item.label}</span>
+                {seasonal && <span className="text-text-dim"> · {seasonal}</span>}
+              </span>
+            </div>
+          );
+        })}
       </div>
+      <p
+        data-testid="legend-shortcuts"
+        className="mt-3 border-t border-border pt-3 font-mono text-[11px] tracking-wide text-text-dim pointer-coarse:hidden"
+      >
+        Your row: <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd> <Kbd>0</Kbd> set · <Kbd>←</Kbd> <Kbd>→</Kbd> move
+      </p>
     </div>
   );
 }

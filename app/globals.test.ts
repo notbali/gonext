@@ -88,3 +88,30 @@ describe("availability grid columns", () => {
     expect(rule).toMatch(/letter-spacing:\s*normal/);
   });
 });
+
+/** The body of the first rule whose selector is exactly `selector`. */
+function ruleBody(selector: string): string {
+  const start = css.indexOf(`${selector} {`);
+  if (start === -1) return "";
+  return css.slice(css.indexOf("{", start) + 1, css.indexOf("}", start));
+}
+
+describe("halloween season", () => {
+  it("re-tints the palette's raw tokens when the root carries data-season=halloween", () => {
+    const body = ruleBody(':root[data-season="halloween"]');
+    for (const token of ["--raw-bg", "--raw-surface", "--raw-border", "--raw-accent", "--raw-accent-bright", "--raw-accent-dim"]) {
+      expect(body).toContain(`${token}:`);
+    }
+  });
+
+  it("derives accent glows from the accent token, so a season's accent carries through", () => {
+    expect(css).not.toContain("255, 70, 85");
+    expect(ruleBody(".ambient-grain")).toContain("var(--raw-accent)");
+  });
+
+  it("drifts fog only in the halloween season, and never under reduced motion", () => {
+    expect(css).toContain(".ambient-fog");
+    const reduced = mediaBlocks("(prefers-reduced-motion: reduce)").join("\n");
+    expect(reduced).toContain(".ambient-fog");
+  });
+});

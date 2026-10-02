@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePrefersReducedMotion } from "@/lib/motion";
+import { bootStages } from "@/lib/season";
+import { useSeason } from "@/components/SeasonProvider";
 
 const SESSION_KEY = "gonext-booted";
 const NORMAL_DURATION_MS = 1900;
 const REDUCED_DURATION_MS = 120;
-
-const STAGES = ["SESSION", "ROSTER", "SCHEDULE", "READY"];
 
 function subscribeNoop() {
   return () => {};
@@ -29,6 +29,7 @@ function getIsColdSessionServerSnapshot() {
  */
 export function BootSequence() {
   const reducedMotion = usePrefersReducedMotion();
+  const stages = bootStages(useSeason());
   // Server and the first client (hydration) render both resolve to false via
   // getServerSnapshot, so there's nothing to mismatch — this only reflects
   // sessionStorage once the client has actually mounted.
@@ -69,7 +70,7 @@ export function BootSequence() {
           </div>
         </div>
         <div className="grid w-[280px] gap-2">
-          {STAGES.map((stage, i) => (
+          {stages.map((stage, i) => (
             <div
               key={stage}
               style={{ animationDelay: `${i * 110}ms` }}

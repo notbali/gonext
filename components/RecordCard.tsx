@@ -1,7 +1,14 @@
 import type { SeasonRecord } from "@/lib/match-record";
 
-/** The season's win–loss record, overall and per map. */
-export function RecordCard({ record }: { record: SeasonRecord }) {
+function count(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+/**
+ * The season's win–loss record, overall and per map. In the halloween season
+ * `october` adds that month's results as treats (wins) and tricks (losses).
+ */
+export function RecordCard({ record, october }: { record: SeasonRecord; october?: { wins: number; losses: number } }) {
   if (record.byMap.length === 0) return null;
 
   return (
@@ -22,6 +29,14 @@ export function RecordCard({ record }: { record: SeasonRecord }) {
           </li>
         ))}
       </ul>
+      {october && october.wins + october.losses > 0 && (
+        <p
+          data-testid="record-october"
+          className="mt-3 border-t border-border pt-3 font-mono text-caption uppercase tracking-wide text-brand-bright"
+        >
+          🎃 October · {count(october.wins, "treat")} · {count(october.losses, "trick")}
+        </p>
+      )}
     </div>
   );
 }

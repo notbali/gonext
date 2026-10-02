@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ToastProvider, useToast } from "./ToastProvider";
 
@@ -91,5 +91,42 @@ describe("ToastProvider on narrow screens", () => {
     const toast = screen.getByRole("status");
     expect(toast).toHaveClass("w-full", "sm:w-auto", "sm:min-w-[300px]");
     expect(toast).not.toHaveClass("min-w-[300px]");
+  });
+
+  it("runs a toast's action from its button, then dismisses the toast", async () => {
+    const onUndo = vi.fn();
+    function WithAction() {
+      const { addToast } = useToast();
+      return <button onClick={() => addToast({ message: "Saved", action: { label: "Undo", onClick: onUndo } })}>Fire</button>;
+    }
+    render(
+      <ToastProvider>
+        <WithAction />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fire" }));
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    // The toast leaves through its exit animation.
+    await waitFor(() => expect(screen.queryByText("Saved")).toBeNull());
+  });
+
+  it("replaces an earlier toast that shares its key instead of stacking", async () => {
+    function Keyed({ message }: { message: string }) {
+      const { addToast } = useToast();
+      return <button onClick={() => addToast({ message, key: "undo" })}>Fire {message}</button>;
+    }
+    render(
+      <ToastProvider>
+        <Keyed message="One" />
+        <Keyed message="Two" />
+      </ToastProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fire One" }));
+    fireEvent.click(screen.getByRole("button", { name: "Fire Two" }));
+
+    await waitFor(() => expect(screen.getAllByRole("status")).toHaveLength(1));
+    expect(screen.getByRole("status")).toHaveTextContent("Two");
   });
 });

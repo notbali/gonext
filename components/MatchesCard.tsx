@@ -1,13 +1,15 @@
 import Link from "next/link";
 import type { Match, Teammate } from "@/lib/types";
-import { countdownLabel, matchDateLine, minutesUntil } from "@/lib/dates";
+import { countdownLabel, matchDateLine } from "@/lib/dates";
+import { LiveCountdown } from "@/components/LiveCountdown";
+import { LocalMatchTime } from "@/components/LocalMatchTime";
 import { getConfirmedTeammates } from "@/lib/matches";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
 import { MATCH_READY_THRESHOLD } from "@/lib/schedule-column-state";
+import { isHalloweenNight, type Season } from "@/lib/season";
 
 const ENTRANCE_STAGGER_MS = 70;
-const URGENCY_WINDOW_MINUTES = 60;
 
 function MatchItem({
   match,
@@ -16,6 +18,7 @@ function MatchItem({
   today,
   index,
   isNext,
+  season,
 }: {
   match: Match;
   teammates: Teammate[];
@@ -23,12 +26,10 @@ function MatchItem({
   today: Date;
   index: number;
   isNext: boolean;
+  season: Season;
 }) {
-  const countdown = countdownLabel(match.date, today, weekDates);
   const isThisWeek = match.availabilityCollected;
   const confirmed = isThisWeek ? getConfirmedTeammates(match, teammates, weekDates) : [];
-  const minutesOut = minutesUntil(match.date, today);
-  const isUrgent = minutesOut >= 0 && minutesOut <= URGENCY_WINDOW_MINUTES;
   const label = match.isPlayoffs ? "PLAYOFFS" : (match.map ?? "MAP TBD");
   const playersShort = MATCH_READY_THRESHOLD - confirmed.length;
 
@@ -48,16 +49,19 @@ function MatchItem({
         >
           {matchDateLine(match, label)}
         </p>
-        <span
-          data-testid="match-countdown"
-          data-urgent={isUrgent ? "" : undefined}
-          className={`shrink-0 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider ${
-            isThisWeek ? "bg-brand-dim text-brand-bright" : "border border-border text-text-dim"
-          } ${isUrgent ? "urgency-breathe" : ""}`}
-        >
-          {countdown}
-        </span>
+        {isThisWeek ? (
+          <LiveCountdown date={match.date} now={today} />
+        ) : (
+          <span
+            data-testid="match-countdown"
+            className="shrink-0 rounded-full border border-border px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-text-dim"
+          >
+            {countdownLabel(match.date, today, weekDates)}
+          </span>
+        )}
       </div>
+      <LocalMatchTime date={match.date} className="mt-1" />
+      {season === "halloween" && isHalloweenNight(match.date) && <HalloweenBadge />}
 
       {isThisWeek ? (
         <div className="mt-3 flex items-center gap-2">
@@ -95,16 +99,29 @@ function MatchItem({
   );
 }
 
+export function HalloweenBadge() {
+  return (
+    <span
+      data-testid="halloween-badge"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand-dim px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-brand-bright"
+    >
+      🎃 Halloween night
+    </span>
+  );
+}
+
 export function MatchesCard({
   matches,
   teammates,
   weekDates,
   today,
+  season = null,
 }: {
   matches: Match[];
   teammates: Teammate[];
   weekDates: Date[];
   today: Date;
+  season?: Season;
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
@@ -130,6 +147,7 @@ export function MatchesCard({
               today={today}
               index={index}
               isNext={index === 0}
+              season={season}
             />
           ))}
         </div>

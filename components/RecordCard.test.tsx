@@ -15,4 +15,23 @@ describe("RecordCard", () => {
     const { container } = render(<RecordCard record={{ wins: 0, losses: 0, byMap: [] }} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  const record = { wins: 3, losses: 1, byMap: [{ map: "LOTUS", wins: 3, losses: 1 }] };
+
+  it("counts October's wins and losses as treats and tricks", () => {
+    render(<RecordCard record={record} october={{ wins: 2, losses: 1 }} />);
+    expect(screen.getByTestId("record-october")).toHaveTextContent("October · 2 treats · 1 trick");
+  });
+
+  it("singularizes and pluralizes each count on its own", () => {
+    render(<RecordCard record={record} october={{ wins: 1, losses: 0 }} />);
+    expect(screen.getByTestId("record-october")).toHaveTextContent("October · 1 treat · 0 tricks");
+  });
+
+  it("leaves the October line out with no October results, or out of season", () => {
+    const { rerender } = render(<RecordCard record={record} october={{ wins: 0, losses: 0 }} />);
+    expect(screen.queryByTestId("record-october")).toBeNull();
+    rerender(<RecordCard record={record} />);
+    expect(screen.queryByTestId("record-october")).toBeNull();
+  });
 });
