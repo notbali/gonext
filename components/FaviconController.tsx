@@ -86,19 +86,42 @@ export function FaviconController({
   season?: Season;
 }) {
   useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     const canvas = document.createElement("canvas");
     canvas.width = ICON_SIZE;
     canvas.height = ICON_SIZE;
     const ctx = canvas.getContext("2d");
-    if (!link || !ctx) return;
+    if (!ctx) return;
 
-    const originalHref = link.href;
+    // Our own icon link, kept last in <head> — browsers show the last matching
+    // icon, and Next.js re-renders its own favicon <link> whenever it likes, so
+    // rewriting that one's href doesn't stick. Removing ours reveals the default.
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/png";
+    link.dataset.dynamicFavicon = "";
+
+    function keepLast() {
+      const icons = document.head.querySelectorAll('link[rel="icon"]');
+      if (link.isConnected && icons[icons.length - 1] !== link) document.head.appendChild(link);
+    }
+    const observer = new MutationObserver(keepLast);
+    observer.observe(document.head, { childList: true });
+
+    function show(href: string | null) {
+      if (href === null) {
+        link.remove();
+        return;
+      }
+      link.href = href;
+      if (!link.isConnected) document.head.appendChild(link);
+      keepLast();
+    }
+
     const isPumpkin = season === "halloween";
     const draw = isPumpkin ? drawPumpkin : drawIcon;
     const markColor = isPumpkin ? PUMPKIN_GLOW : "#ff4655";
-    // In season the still icon is a lit pumpkin rather than the static favicon file.
-    let restHref = originalHref;
+    // In season the still icon is a lit pumpkin; otherwise it's the page's own favicon.
+    let restHref: string | null = null;
     if (isPumpkin) {
       draw(ctx, { dotOn: true, markColor });
       restHref = canvas.toDataURL();
@@ -111,7 +134,7 @@ export function FaviconController({
         clearInterval(intervalId);
         intervalId = null;
       }
-      link!.href = restHref;
+      show(restHref);
     }
 
     function matchIsImminent(): boolean {
@@ -126,7 +149,7 @@ export function FaviconController({
       intervalId = setInterval(() => {
         tick++;
         draw(ctx!, tickToFrame(tick));
-        link!.href = canvas.toDataURL();
+        show(canvas.toDataURL());
       }, intervalMs);
     }
 
@@ -147,8 +170,9 @@ export function FaviconController({
 
     return () => {
       document.removeEventListener("visibilitychange", evaluate);
+      observer.disconnect();
       stop();
-      link.href = originalHref;
+      link.remove();
     };
   }, [hasUnsetDays, nearestMatchDate, season]);
 

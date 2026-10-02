@@ -7,6 +7,12 @@ function mockDocumentHidden(hidden: boolean) {
   Object.defineProperty(document, "hidden", { configurable: true, get: () => hidden });
 }
 
+/** The icon the browser actually shows: the last `rel="icon"` link in the head. */
+function shownIcon(): string {
+  const links = document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"]');
+  return links[links.length - 1].href;
+}
+
 function fireVisibilityChange() {
   document.dispatchEvent(new Event("visibilitychange"));
 }
@@ -58,10 +64,9 @@ describe("FaviconController", () => {
     render(<FaviconController hasUnsetDays={true} nearestMatchDate={null} />);
     fireVisibilityChange();
 
-    const link = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-    const hrefBefore = link.href;
+    const hrefBefore = shownIcon();
     vi.advanceTimersByTime(2100);
-    expect(link.href).not.toBe(hrefBefore);
+    expect(shownIcon()).not.toBe(hrefBefore);
   });
 
   it("stops pulsing once the tab regains focus", () => {
@@ -82,10 +87,9 @@ describe("FaviconController", () => {
     render(<FaviconController hasUnsetDays={false} nearestMatchDate={nearestMatchDate} />);
     fireVisibilityChange();
 
-    const link = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-    const hrefBefore = link.href;
+    const hrefBefore = shownIcon();
     vi.advanceTimersByTime(1100);
-    expect(link.href).not.toBe(hrefBefore);
+    expect(shownIcon()).not.toBe(hrefBefore);
   });
 
   it("does not alternate for a match more than 30 minutes out", () => {
@@ -98,7 +102,7 @@ describe("FaviconController", () => {
   });
 
   describe("halloween season", () => {
-    const iconHref = () => (document.querySelector('link[rel="icon"]') as HTMLLinkElement).href;
+    const iconHref = shownIcon;
 
     beforeEach(() => {
       let frame = 0;
@@ -130,6 +134,25 @@ describe("FaviconController", () => {
       fireVisibilityChange();
       expect(iconHref()).toMatch(/^data:image\/png/);
       expect(iconHref()).not.toContain("favicon.ico");
+    });
+
+    it("adds its own icon link rather than rewriting the page's", () => {
+      render(<FaviconController season="halloween" hasUnsetDays={false} nearestMatchDate={null} />);
+      const links = document.head.querySelectorAll<HTMLLinkElement>('link[rel="icon"]');
+      expect(links).toHaveLength(2);
+      expect(links[0].href).toContain("/favicon.ico");
+    });
+
+    it("stays the shown icon when the page adds another icon link after it", async () => {
+      render(<FaviconController season="halloween" hasUnsetDays={false} nearestMatchDate={null} />);
+      // Next.js re-renders its metadata <link rel="icon"> into the head on its own schedule.
+      const late = document.createElement("link");
+      late.rel = "icon";
+      late.href = "/favicon.ico?late";
+      document.head.appendChild(late);
+      await Promise.resolve();
+
+      expect(iconHref()).toMatch(/^data:image\/png/);
     });
 
     it("restores the default icon when unmounted", () => {
