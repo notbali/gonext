@@ -8,6 +8,10 @@ import { ActionForm } from "@/components/ActionForm";
 import { RosterList } from "@/components/RosterList";
 import { getScheduleData } from "@/lib/schedule-data";
 import { completenessOf } from "@/lib/completeness";
+import { nowInTeamTimezone } from "@/lib/dates";
+import { unsetForRestOfWeek } from "@/lib/nudge";
+import { loadDiscordIds } from "@/lib/discord-ids";
+import { UnsetNudgeCard } from "@/components/UnsetNudgeCard";
 import {
   claimCoachRole,
   deactivateTeammate,
@@ -24,7 +28,7 @@ export default async function RosterPage() {
         teammates: { orderBy: { order: "asc" }, include: { user: true } },
       },
     }),
-    getScheduleData(new Date(), new Date(), db, 1),
+    getScheduleData(nowInTeamTimezone(), new Date(), db, 1),
   ]);
 
   if (!team) {
@@ -45,6 +49,9 @@ export default async function RosterPage() {
   if (!session?.teammateId) {
     return <AccessGate isSignedIn={Boolean(session?.user)} />;
   }
+
+  const unset = isCoach && schedule ? unsetForRestOfWeek(schedule.teammates, schedule.weekDates, new Date()) : [];
+  const discordIds = unset.length ? await loadDiscordIds(unset.map((t) => t.id)) : new Map<string, string | null>();
 
   return (
     <PageContainer>
@@ -85,6 +92,17 @@ export default async function RosterPage() {
           viewerIsCoach={isCoach}
           promoteTeammate={promoteTeammate}
           deactivateTeammate={deactivateTeammate}
+        />
+      )}
+
+      {isCoach && (
+        <UnsetNudgeCard
+          teammates={unset.map((t) => ({
+            id: t.id,
+            name: t.name,
+            avatarUrl: t.avatarUrl,
+            discordId: discordIds.get(t.id) ?? null,
+          }))}
         />
       )}
 

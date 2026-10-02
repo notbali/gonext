@@ -2,6 +2,7 @@ import { db as defaultDb } from "@/lib/db";
 import { getEasternParts } from "@/lib/dates";
 import { getScheduleData } from "@/lib/schedule-data";
 import { buildDuePings, type BotPing } from "@/lib/bot-pings";
+import { loadDiscordIds } from "@/lib/discord-ids";
 import type { PrismaClient } from "@/lib/generated/prisma/client";
 
 /** This week plus next, so Sunday's reminder can see next week's gaps. */
@@ -18,14 +19,7 @@ export async function loadDuePings(
   const schedule = await getScheduleData(weekReference, now, db, PING_WEEKS);
   if (!schedule) return [];
 
-  const links = await db.teammate.findMany({
-    where: { id: { in: schedule.teammates.map((t) => t.id) } },
-    select: {
-      id: true,
-      user: { select: { accounts: { where: { provider: "discord" }, select: { providerAccountId: true } } } },
-    },
-  });
-  const discordIdOf = new Map(links.map((l) => [l.id, l.user.accounts[0]?.providerAccountId ?? null]));
+  const discordIdOf = await loadDiscordIds(schedule.teammates.map((t) => t.id), db);
 
   return buildDuePings({
     now,
