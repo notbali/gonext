@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/types";
 import { updateAvailability, updateAvailabilityNote } from "@/app/actions";
 import { normalizeTimeRange } from "@/lib/time-range";
+import { shortDayLabel } from "@/lib/dates";
 import { useToast } from "@/components/ToastProvider";
 import { useSeason } from "@/components/SeasonProvider";
 import { seasonalStatusLabel } from "@/lib/season";
@@ -24,6 +25,15 @@ const CELL_OPTION_LABELS: Partial<Record<AvailabilityStatus, string>> = {
 };
 
 type LockState = "idle" | "committed" | "conflict";
+
+/**
+ * The cell's day, e.g. "WED SEP 23". Read from the ISO string's date part rather
+ * than through `new Date`, which would shift it into the viewer's own timezone.
+ */
+function dayLabel(dateISO: string): string {
+  const [y, m, d] = dateISO.slice(0, 10).split("-").map(Number);
+  return shortDayLabel(new Date(y, m - 1, d));
+}
 
 // Mirrors the .slot[data-lock] animation durations in app/globals.css
 // (gonext-lock: 220ms, gonext-conflict: 180ms).
@@ -92,7 +102,13 @@ export function EditableCell({
     return () => clearTimeout(t);
   }, [lockState]);
 
-  function save(nextStatus: AvailabilityStatus, nextRange: string) {
+  function statusLabel(value: AvailabilityStatus): string {
+    const option = AVAILABILITY_STATUS_OPTIONS.find((o) => o.value === value)!;
+    return seasonalStatusLabel(value, season) ?? CELL_OPTION_LABELS[value] ?? option.label;
+  }
+
+  /** Saves a change; once it lands, a toast offers to put the previous value back (unless this *is* that undo). */
+  function save(nextStatus: AvailabilityStatus, nextRange: string, { undoable = true } = {}) {
     const prevStatus = localStatus;
     const prevRange = localRange;
     startTransition(async () => {
@@ -122,6 +138,22 @@ export function EditableCell({
       }
       setSavedRange(nextRange);
       setLockState("committed");
+      if (undoable) {
+        const shown = nextStatus === "available" && nextRange ? nextRange : statusLabel(nextStatus);
+        addToast({
+          message: `${dayLabel(dateISO)} set to ${shown}`,
+          // One undo at a time: a newer edit's toast replaces this one.
+          key: "availability-undo",
+          action: {
+            label: "Undo",
+            onClick: () => {
+              setLocalStatus(prevStatus);
+              setLocalRange(prevRange);
+              save(prevStatus, prevRange, { undoable: false });
+            },
+          },
+        });
+      }
     });
   }
 
@@ -180,7 +212,7 @@ export function EditableCell({
       >
         {AVAILABILITY_STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
-            {seasonalStatusLabel(o.value, season) ?? CELL_OPTION_LABELS[o.value] ?? o.label}
+            {statusLabel(o.value)}
           </option>
         ))}
       </select>

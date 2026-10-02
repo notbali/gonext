@@ -206,4 +206,60 @@ describe("EditableCell notes", () => {
     const options = screen.getAllByRole("option").map((o) => o.textContent);
     expect(options).toEqual(["Not set", "Available", "Maybe", "Out"]);
   });
+
+  describe("undo", () => {
+    beforeEach(() => {
+      mockUpdateAvailability.mockReset();
+    });
+
+    it("offers to undo a status change once it's saved, naming the day", async () => {
+      mockUpdateAvailability.mockResolvedValue(undefined);
+      renderCell({ status: "tentative" });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "unavailable" } });
+
+      expect(await screen.findByRole("status")).toHaveTextContent("MON SEP 14 set to Out");
+      expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
+    });
+
+    it("puts the previous status back, in the cell and on the server", async () => {
+      mockUpdateAvailability.mockResolvedValue(undefined);
+      renderCell({ status: "tentative" });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "unavailable" } });
+      fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+
+      await waitFor(() => expect(mockUpdateAvailability).toHaveBeenCalledTimes(2));
+      expect(mockUpdateAvailability).toHaveBeenLastCalledWith("t1", "2026-09-14T00:00:00.000Z", "tentative", null);
+      expect(screen.getByRole("combobox")).toHaveValue("tentative");
+    });
+
+    it("restores an available day's time range too", async () => {
+      mockUpdateAvailability.mockResolvedValue(undefined);
+      render(<Wrapper status="available" timeRange="6PM–11PM" />);
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "unavailable" } });
+      fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+
+      await waitFor(() =>
+        expect(mockUpdateAvailability).toHaveBeenLastCalledWith("t1", "2026-09-14T00:00:00.000Z", "available", "6PM–11PM"),
+      );
+    });
+
+    it("doesn't offer an undo of the undo", async () => {
+      mockUpdateAvailability.mockResolvedValue(undefined);
+      renderCell({ status: "tentative" });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "unavailable" } });
+      fireEvent.click(await screen.findByRole("button", { name: "Undo" }));
+
+      await waitFor(() => expect(mockUpdateAvailability).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(screen.queryByRole("button", { name: "Undo" })).toBeNull());
+    });
+
+    it("offers no undo when the save fails", async () => {
+      mockUpdateAvailability.mockRejectedValue(new Error("Nope"));
+      renderCell({ status: "tentative" });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "unavailable" } });
+
+      expect(await screen.findByText("Nope")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
+    });
+  });
 });

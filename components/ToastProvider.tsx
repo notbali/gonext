@@ -7,12 +7,23 @@ import { toast as toastVariant } from "@/lib/motion";
 import { useHasMounted } from "@/lib/use-has-mounted";
 
 type ToastVariant = "success" | "error";
-type ToastItem = { id: number; message: string; variant: ToastVariant };
+type ToastAction = { label: string; onClick: () => void };
+type ToastInput = {
+  message: string;
+  variant?: ToastVariant;
+  /** A button on the toast (e.g. Undo); using it dismisses the toast. */
+  action?: ToastAction;
+  /** A new toast replaces any showing toast with the same key, instead of stacking. */
+  key?: string;
+};
+type ToastItem = { id: number; message: string; variant: ToastVariant; action?: ToastAction; key?: string };
 
 const AUTO_DISMISS_MS = 3400;
+/** Toasts with an action stay up longer, so there's time to reach for it. */
+const ACTION_DISMISS_MS = 6000;
 
 const ToastContext = createContext<{
-  addToast: (toast: { message: string; variant?: ToastVariant }) => void;
+  addToast: (toast: ToastInput) => void;
 } | null>(null);
 
 export function useToast() {
@@ -29,13 +40,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   // must match on the client's first (hydration) render too.
   const mounted = useHasMounted();
 
-  const addToast = useCallback(({ message, variant = "success" }: { message: string; variant?: ToastVariant }) => {
-    const id = nextId++;
-    setToasts((prev) => [...prev, { id, message, variant }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, AUTO_DISMISS_MS);
+  const dismiss = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  const addToast = useCallback(
+    ({ message, variant = "success", action, key }: ToastInput) => {
+      const id = nextId++;
+      setToasts((prev) => [
+        ...(key ? prev.filter((t) => t.key !== key) : prev),
+        { id, message, variant, action, key },
+      ]);
+      setTimeout(() => dismiss(id), action ? ACTION_DISMISS_MS : AUTO_DISMISS_MS);
+    },
+    [dismiss],
+  );
 
   return (
     <ToastContext.Provider value={{ addToast }}>
@@ -62,6 +81,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     }`}
                   />
                   <span className="text-body text-text-primary">{t.message}</span>
+                  {t.action && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        t.action!.onClick();
+                        dismiss(t.id);
+                      }}
+                      className="btn-press tap-target ml-auto shrink-0 font-mono text-[11px] font-semibold uppercase tracking-wider text-brand-bright hover:text-brand"
+                    >
+                      {t.action.label}
+                    </button>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
