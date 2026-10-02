@@ -420,3 +420,27 @@ describe("AvailabilityGrid notes", () => {
     expect(note).toHaveAttribute("title", "might be late");
   });
 });
+
+describe("AvailabilityGrid seasonal wording", () => {
+  const mixed: Teammate[] = [
+    {
+      id: "t2",
+      name: "Bea",
+      avatarUrl: null,
+      week: weekDates.map((_, i) => ({ status: i === 0 ? ("tentative" as const) : ("unavailable" as const) })),
+    },
+  ];
+
+  it("reads MAYBE and OUT out of season", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={mixed} matches={[]} />);
+    expect(screen.getAllByText("MAYBE")).toHaveLength(1);
+    expect(screen.getAllByText("OUT")).toHaveLength(6);
+  });
+
+  it("reads GHOST? and RIP in the halloween season", () => {
+    render(<AvailabilityGrid weekDates={weekDates} teammates={mixed} matches={[]} season="halloween" />);
+    expect(screen.getAllByText("GHOST?")).toHaveLength(1);
+    expect(screen.getAllByText("RIP")).toHaveLength(6);
+    expect(screen.queryByText("MAYBE")).toBeNull();
+  });
+});

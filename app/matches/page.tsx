@@ -13,7 +13,9 @@ import { suggestMatchTimes } from "@/lib/best-times";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { summarizeRecord, type MatchResultValue } from "@/lib/match-record";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
-import { chunkIntoWeeks, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
+import { chunkIntoWeeks, getEasternParts, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
+import { getSeason, isHalloweenNight, type Season } from "@/lib/season";
+import { HalloweenBadge } from "@/components/MatchesCard";
 import { mapForWeek } from "@/lib/week-schedule";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
@@ -30,11 +32,13 @@ function MatchList({
   matches,
   isCoach,
   showResults = false,
+  season,
 }: {
   title: string;
   matches: MatchRow[];
   isCoach: boolean;
   showResults?: boolean;
+  season: Season;
 }) {
   return (
     <div className="mt-6">
@@ -49,11 +53,14 @@ function MatchList({
               key={m.id}
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4"
             >
-              <p
-                className={`text-body-lg font-semibold ${m.isPlayoffs ? "text-warning" : "text-text-primary"}`}
-              >
-                {matchDateLine(m, label)}
-              </p>
+              <div>
+                <p
+                  className={`text-body-lg font-semibold ${m.isPlayoffs ? "text-warning" : "text-text-primary"}`}
+                >
+                  {matchDateLine(m, label)}
+                </p>
+                {season === "halloween" && isHalloweenNight(m.date) && <HalloweenBadge />}
+              </div>
               <div className="flex shrink-0 items-center gap-4">
                 {showResults && <MatchResultPicker matchId={m.id} result={m.result} canEdit={isCoach} />}
                 {isCoach && (
@@ -66,6 +73,12 @@ function MatchList({
       </div>
     </div>
   );
+}
+
+/** Whether `date` falls in October of `now`'s year, by the Eastern calendar. */
+function isThisOctober(date: Date, now: Date): boolean {
+  const p = getEasternParts(date);
+  return p.month === 9 && p.year === getEasternParts(now).year;
 }
 
 export default async function MatchesPage() {
@@ -85,6 +98,7 @@ export default async function MatchesPage() {
 
   const isCoach = session?.isCoach ?? false;
   const now = new Date();
+  const season = getSeason(now);
   const weekMaps = team.weekMaps.map((w) => ({ weekStart: w.weekStart, map: w.map }));
   const toRow = (m: (typeof team.matches)[number]): MatchRow => ({
     id: m.id,
@@ -126,12 +140,15 @@ export default async function MatchesPage() {
       <h1 className="mt-1 text-title font-bold text-text-primary">{team.name}</h1>
 
       {upcoming.length > 0 ? (
-        <MatchList title="Upcoming" matches={upcoming} isCoach={isCoach} />
+        <MatchList title="Upcoming" matches={upcoming} isCoach={isCoach} season={season} />
       ) : (
         <p className="mt-6 text-body text-text-muted">No upcoming matches scheduled.</p>
       )}
-      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} showResults />}
-      <RecordCard record={summarizeRecord(past)} />
+      {past.length > 0 && <MatchList title="Past" matches={past} isCoach={isCoach} showResults season={season} />}
+      <RecordCard
+        record={summarizeRecord(past)}
+        october={season === "halloween" ? summarizeRecord(past.filter((m) => isThisOctober(m.date, now))) : undefined}
+      />
 
       <CalendarSubscribeCard feedUrl={feedUrl} />
 

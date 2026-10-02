@@ -5,6 +5,7 @@ import { getConfirmedTeammates } from "@/lib/matches";
 import { Avatar } from "@/components/Avatar";
 import { GridReveal } from "@/components/GridReveal";
 import { MATCH_READY_THRESHOLD } from "@/lib/schedule-column-state";
+import { isHalloweenNight, type Season } from "@/lib/season";
 
 const ENTRANCE_STAGGER_MS = 70;
 const URGENCY_WINDOW_MINUTES = 60;
@@ -16,6 +17,7 @@ function MatchItem({
   today,
   index,
   isNext,
+  season,
 }: {
   match: Match;
   teammates: Teammate[];
@@ -23,6 +25,7 @@ function MatchItem({
   today: Date;
   index: number;
   isNext: boolean;
+  season: Season;
 }) {
   const countdown = countdownLabel(match.date, today, weekDates);
   const isThisWeek = match.availabilityCollected;
@@ -58,6 +61,7 @@ function MatchItem({
           {countdown}
         </span>
       </div>
+      {season === "halloween" && isHalloweenNight(match.date) && <HalloweenBadge />}
 
       {isThisWeek ? (
         <div className="mt-3 flex items-center gap-2">
@@ -95,16 +99,29 @@ function MatchItem({
   );
 }
 
+export function HalloweenBadge() {
+  return (
+    <span
+      data-testid="halloween-badge"
+      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand-dim px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-brand-bright"
+    >
+      🎃 Halloween night
+    </span>
+  );
+}
+
 export function MatchesCard({
   matches,
   teammates,
   weekDates,
   today,
+  season = null,
 }: {
   matches: Match[];
   teammates: Teammate[];
   weekDates: Date[];
   today: Date;
+  season?: Season;
 }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
@@ -130,6 +147,7 @@ export function MatchesCard({
               today={today}
               index={index}
               isNext={index === 0}
+              season={season}
             />
           ))}
         </div>

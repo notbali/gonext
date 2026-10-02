@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { EditableCell } from "./EditableCell";
 import { ToastProvider } from "./ToastProvider";
+import { SeasonProvider } from "./SeasonProvider";
 
 function Wrapper(props: { status: "available" | "tentative" | "unavailable" | "not-set"; timeRange?: string; note?: string }) {
   return (
@@ -188,5 +189,21 @@ describe("EditableCell notes", () => {
   it("caps the note at 60 characters", () => {
     render(<Wrapper status="tentative" note="late" />);
     expect(screen.getByPlaceholderText(/note/i)).toHaveAttribute("maxLength", "60");
+  });
+
+  it("labels the tentative and unavailable options Ghost? and RIP in the halloween season", () => {
+    render(
+      <SeasonProvider season="halloween">
+        <Wrapper status="not-set" />
+      </SeasonProvider>,
+    );
+    const options = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(options).toEqual(["Not set", "Available", "Ghost?", "RIP"]);
+  });
+
+  it("labels them Maybe and Out otherwise", () => {
+    render(<Wrapper status="not-set" />);
+    const options = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(options).toEqual(["Not set", "Available", "Maybe", "Out"]);
   });
 });

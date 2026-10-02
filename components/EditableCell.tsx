@@ -6,6 +6,8 @@ import { AVAILABILITY_STATUS_OPTIONS, type AvailabilityStatus } from "@/lib/type
 import { updateAvailability, updateAvailabilityNote } from "@/app/actions";
 import { normalizeTimeRange } from "@/lib/time-range";
 import { useToast } from "@/components/ToastProvider";
+import { useSeason } from "@/components/SeasonProvider";
+import { seasonalStatusLabel } from "@/lib/season";
 
 const CELL_STYLES: Record<AvailabilityStatus, string> = {
   available: "border-primary/30 bg-primary-dim",
@@ -50,6 +52,7 @@ export function EditableCell({
   const [isPending, startTransition] = useTransition();
   const [lockState, setLockState] = useState<LockState>("idle");
   const { addToast } = useToast();
+  const season = useSeason();
   const router = useRouter();
   const [localNote, setLocalNote] = useState(note ?? "");
   const [savedNote, setSavedNote] = useState(note ?? "");
@@ -177,7 +180,7 @@ export function EditableCell({
       >
         {AVAILABILITY_STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
-            {CELL_OPTION_LABELS[o.value] ?? o.label}
+            {seasonalStatusLabel(o.value, season) ?? CELL_OPTION_LABELS[o.value] ?? o.label}
           </option>
         ))}
       </select>

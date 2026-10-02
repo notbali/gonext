@@ -10,6 +10,7 @@ import { DayColumnHeader } from "@/components/DayColumnHeader";
 import { isColumnFullyAvailable, isDayMatchReady } from "@/lib/schedule-column-state";
 import { mapForWeek } from "@/lib/week-schedule";
 import { mapImageSrc } from "@/lib/valorant-maps";
+import { seasonalStatusLabel, type Season } from "@/lib/season";
 
 const WEEK_MAP_REVEAL_CLASS =
   "grid grid-rows-[0fr] overflow-hidden transition-[grid-template-rows] duration-[var(--d-state)] ease-[var(--e-out)] group-hover:grid-rows-[1fr]";
@@ -31,7 +32,9 @@ const CELL_STYLES: Record<DayAvailability["status"], string> = {
   "not-set": "border-border/60 bg-transparent text-text-dim",
 };
 
-function cellLabel(day: DayAvailability): string {
+function cellLabel(day: DayAvailability, season: Season): string {
+  const seasonal = seasonalStatusLabel(day.status, season);
+  if (seasonal) return seasonal.toUpperCase();
   switch (day.status) {
     case "available":
       return day.timeRange ?? "ALL DAY";
@@ -53,6 +56,7 @@ function WeekSection({
   myTeammateId,
   isFirst,
   map,
+  season,
 }: {
   weekDates: Date[];
   dayOffset: number;
@@ -61,6 +65,7 @@ function WeekSection({
   myTeammateId?: string | null;
   isFirst: boolean;
   map: string | null;
+  season: Season;
 }) {
   const matchByDay = weekDates.map((date) => matches.find((m) => isOnTeamDay(m.date, date)));
   const src = map ? mapImageSrc(map) : null;
@@ -128,7 +133,7 @@ function WeekSection({
                     }`}
                   >
                     <span className="font-mono text-caption font-semibold tracking-wide">
-                      {cellLabel(day)}
+                      {cellLabel(day, season)}
                     </span>
                     {day.note && (
                       <span
@@ -176,12 +181,14 @@ export function AvailabilityGrid({
   matches,
   myTeammateId,
   weekMaps = [],
+  season = null,
 }: {
   weekDates: Date[];
   teammates: Teammate[];
   matches: Match[];
   myTeammateId?: string | null;
   weekMaps?: WeekMapInfo[];
+  season?: Season;
 }) {
   const weeks = chunkIntoWeeks(weekDates);
 
@@ -202,6 +209,7 @@ export function AvailabilityGrid({
               myTeammateId={myTeammateId}
               isFirst={weekIndex === 0}
               map={mapForWeek(weekMaps, week[0])}
+              season={season}
             />
           ))}
         </div>

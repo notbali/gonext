@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { HoverGroup } from "./HoverGroup";
 import { MapLabel } from "./MapLabel";
+import { SeasonProvider } from "./SeasonProvider";
+import { SEASONAL_SCRAMBLE_CHARACTERS } from "@/lib/season";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -119,5 +121,29 @@ describe("MapLabel", () => {
     });
 
     expect(visibleText()).toBe("FRACTURE");
+  });
+
+  it("scrambles with letters and digits out of season", () => {
+    render(
+      <HoverGroup data-testid="group">
+        <MapLabel text="ASCENT" />
+      </HoverGroup>,
+    );
+    expect(visibleText()).toMatch(/^[A-Z0-9]{6}$/);
+  });
+
+  it("scrambles with crypt glyphs in the halloween season, then still decrypts to the map name", () => {
+    render(
+      <SeasonProvider season="halloween">
+        <HoverGroup data-testid="group">
+          <MapLabel text="ASCENT" />
+        </HoverGroup>
+      </SeasonProvider>,
+    );
+    for (const ch of visibleText()) expect(SEASONAL_SCRAMBLE_CHARACTERS).toContain(ch);
+
+    fireEvent.mouseEnter(screen.getByTestId("group"));
+    settle();
+    expect(visibleText()).toBe("ASCENT");
   });
 });

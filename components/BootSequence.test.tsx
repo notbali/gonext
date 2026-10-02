@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { BootSequence } from "./BootSequence";
+import { SeasonProvider } from "./SeasonProvider";
 
 function mockReducedMotion(matches: boolean) {
   vi.stubGlobal(
@@ -48,5 +49,21 @@ describe("BootSequence", () => {
 
     act(() => vi.advanceTimersByTime(150));
     expect(screen.queryByTestId("boot-sequence")).not.toBeInTheDocument();
+  });
+
+  it("runs the usual boot stages out of season", () => {
+    render(<BootSequence />);
+    expect(screen.getByTestId("boot-sequence")).toHaveTextContent(/SESSION.*ROSTER.*SCHEDULE.*READY/);
+  });
+
+  it("summons the team instead in the halloween season", () => {
+    render(
+      <SeasonProvider season="halloween">
+        <BootSequence />
+      </SeasonProvider>,
+    );
+    const boot = screen.getByTestId("boot-sequence");
+    expect(boot).toHaveTextContent(/SUMMONING.*RAISING ROSTER.*HAUNTING SCHEDULE.*READY/);
+    expect(boot).not.toHaveTextContent("SESSION");
   });
 });

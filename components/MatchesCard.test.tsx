@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MatchesCard } from "./MatchesCard";
 import type { Match, Teammate } from "@/lib/types";
+import { easternPartsToUtc } from "@/lib/dates";
 
 const weekDates = Array.from({ length: 7 }, (_, i) => new Date(2026, 8, 7 + i));
 const teammates: Teammate[] = [];
@@ -147,5 +148,27 @@ describe("MatchesCard short-handed warning", () => {
       />,
     );
     expect(screen.queryByTestId("match-short")).not.toBeInTheDocument();
+  });
+});
+
+describe("MatchesCard Halloween night", () => {
+  const halloween = match({ date: easternPartsToUtc({ year: 2026, month: 9, day: 31, hours: 20, minutes: 0 }) });
+  const today = easternPartsToUtc({ year: 2026, month: 9, day: 29, hours: 12, minutes: 0 });
+  const octWeek = Array.from({ length: 7 }, (_, i) => new Date(2026, 9, 26 + i));
+
+  it("badges a match on Oct 31 in the halloween season", () => {
+    render(<MatchesCard matches={[halloween]} teammates={teammates} weekDates={octWeek} today={today} season="halloween" />);
+    expect(screen.getByTestId("halloween-badge")).toHaveTextContent("Halloween night");
+  });
+
+  it("doesn't badge it when the season is switched off", () => {
+    render(<MatchesCard matches={[halloween]} teammates={teammates} weekDates={octWeek} today={today} />);
+    expect(screen.queryByTestId("halloween-badge")).toBeNull();
+  });
+
+  it("doesn't badge other October matches", () => {
+    const oct30 = match({ date: easternPartsToUtc({ year: 2026, month: 9, day: 30, hours: 20, minutes: 0 }) });
+    render(<MatchesCard matches={[oct30]} teammates={teammates} weekDates={octWeek} today={today} season="halloween" />);
+    expect(screen.queryByTestId("halloween-badge")).toBeNull();
   });
 });

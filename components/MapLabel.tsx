@@ -3,6 +3,8 @@
 import DecryptedText from "@/components/DecryptedText";
 import { useGroupHovered } from "@/components/HoverGroup";
 import { D } from "@/lib/motion";
+import { SEASONAL_SCRAMBLE_CHARACTERS } from "@/lib/season";
+import { useSeason } from "@/components/SeasonProvider";
 
 /** Letters and digits only, so scrambled text keeps the label's uppercase-mono look instead of turning to symbol soup. */
 const SCRAMBLE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -16,6 +18,7 @@ const SCRAMBLE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
  */
 export function MapLabel({ text, className = "" }: { text: string; className?: string }) {
   const hovered = useGroupHovered();
+  const season = useSeason();
 
   return (
     <DecryptedText
@@ -26,7 +29,7 @@ export function MapLabel({ text, className = "" }: { text: string; className?: s
       decryptDelay={D.state * 1000}
       sequential
       speed={45}
-      characters={SCRAMBLE_CHARACTERS}
+      characters={season === "halloween" ? SEASONAL_SCRAMBLE_CHARACTERS : SCRAMBLE_CHARACTERS}
       parentClassName={className}
       className="text-text-primary"
       encryptedClassName="text-brand"

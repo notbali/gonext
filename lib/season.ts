@@ -1,4 +1,5 @@
 import { getEasternParts } from "./dates";
+import type { AvailabilityStatus } from "./types";
 
 /**
  * A seasonal skin the whole site wears for a stretch of the year. Only cosmetic:
@@ -23,4 +24,27 @@ export function getSeason(now: Date, override: string | undefined = process.env.
 export function isHalloweenNight(instant: Date): boolean {
   const p = getEasternParts(instant);
   return p.month === OCTOBER && p.day === 31;
+}
+
+/**
+ * What a scrambled map name cycles through in the halloween season: daggers and
+ * Greek/Cyrillic capitals, all in JetBrains Mono so the label's width never jumps.
+ */
+export const SEASONAL_SCRAMBLE_CHARACTERS = "†‡ΨΩΔΣΞЖЯЮΦ";
+
+/** The boot overlay's stage lines for a season. */
+export function bootStages(season: Season): string[] {
+  return season === "halloween"
+    ? ["SUMMONING", "RAISING ROSTER", "HAUNTING SCHEDULE", "READY"]
+    : ["SESSION", "ROSTER", "SCHEDULE", "READY"];
+}
+
+const HALLOWEEN_STATUS_LABELS: Partial<Record<AvailabilityStatus, string>> = {
+  tentative: "Ghost?",
+  unavailable: "RIP",
+};
+
+/** The short word a season swaps in for a status on the grid, if it has one. */
+export function seasonalStatusLabel(status: AvailabilityStatus, season: Season): string | undefined {
+  return season === "halloween" ? HALLOWEEN_STATUS_LABELS[status] : undefined;
 }
