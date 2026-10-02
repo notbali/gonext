@@ -8,6 +8,8 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { AmbientGrain } from "@/components/AmbientGrain";
 import { FaviconController } from "@/components/FaviconController";
 import { BootSequence } from "@/components/BootSequence";
+import { SeasonProvider } from "@/components/SeasonProvider";
+import { getSeason } from "@/lib/season";
 import { getScheduleData } from "@/lib/schedule-data";
 import { getFaviconSignals } from "@/lib/favicon-data";
 import { appViewport } from "@/lib/viewport";
@@ -41,33 +43,38 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const faviconSignals = schedule && session?.teammateId
     ? getFaviconSignals(schedule, session.teammateId)
     : null;
+  const season = getSeason(today);
 
   return (
     <html
       lang="en"
+      data-season={season ?? undefined}
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-full font-sans antialiased">
-        <BootSequence />
-        <AmbientGrain />
-        {faviconSignals && (
-          <FaviconController
-            hasUnsetDays={faviconSignals.hasUnsetDays}
-            nearestMatchDate={faviconSignals.nearestMatchDate}
-          />
-        )}
-        <ToastProvider>
-          {team && (
-            <TopNav
-              teamDivision={team.division}
-              isSignedIn={Boolean(session?.user)}
-              userName={session?.user?.name}
-              userImage={session?.user?.image}
-              isAdmin={session?.isAdmin ?? false}
+        <SeasonProvider season={season}>
+          <BootSequence />
+          <AmbientGrain season={season} />
+          {(faviconSignals || season) && (
+            <FaviconController
+              hasUnsetDays={faviconSignals?.hasUnsetDays ?? false}
+              nearestMatchDate={faviconSignals?.nearestMatchDate ?? null}
+              season={season}
             />
           )}
-          <RouteTransition>{children}</RouteTransition>
-        </ToastProvider>
+          <ToastProvider>
+            {team && (
+              <TopNav
+                teamDivision={team.division}
+                isSignedIn={Boolean(session?.user)}
+                userName={session?.user?.name}
+                userImage={session?.user?.image}
+                isAdmin={session?.isAdmin ?? false}
+              />
+            )}
+            <RouteTransition>{children}</RouteTransition>
+          </ToastProvider>
+        </SeasonProvider>
       </body>
     </html>
   );

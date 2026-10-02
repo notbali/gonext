@@ -96,4 +96,46 @@ describe("FaviconController", () => {
     fireVisibilityChange();
     expect(setIntervalSpy).not.toHaveBeenCalled();
   });
+
+  describe("halloween season", () => {
+    const iconHref = () => (document.querySelector('link[rel="icon"]') as HTMLLinkElement).href;
+
+    beforeEach(() => {
+      let frame = 0;
+      vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockImplementation(() => `data:image/png;base64,frame${frame++}`);
+    });
+
+    it("shows a pumpkin while the tab is visible, without any animation", () => {
+      const setIntervalSpy = vi.spyOn(window, "setInterval");
+      render(<FaviconController season="halloween" hasUnsetDays={false} nearestMatchDate={null} />);
+      expect(iconHref()).toMatch(/^data:image\/png/);
+      expect(setIntervalSpy).not.toHaveBeenCalled();
+    });
+
+    it("flickers the pumpkin's eyes while hidden with unset days", () => {
+      mockDocumentHidden(true);
+      render(<FaviconController season="halloween" hasUnsetDays={true} nearestMatchDate={null} />);
+      fireVisibilityChange();
+      const before = iconHref();
+      vi.advanceTimersByTime(2100);
+      expect(iconHref()).not.toBe(before);
+    });
+
+    it("goes back to the still pumpkin, not the default icon, once the tab regains focus", () => {
+      mockDocumentHidden(true);
+      render(<FaviconController season="halloween" hasUnsetDays={true} nearestMatchDate={null} />);
+      fireVisibilityChange();
+      vi.advanceTimersByTime(4100);
+      mockDocumentHidden(false);
+      fireVisibilityChange();
+      expect(iconHref()).toMatch(/^data:image\/png/);
+      expect(iconHref()).not.toContain("favicon.ico");
+    });
+
+    it("restores the default icon when unmounted", () => {
+      const { unmount } = render(<FaviconController season="halloween" hasUnsetDays={false} nearestMatchDate={null} />);
+      unmount();
+      expect(iconHref()).toContain("/favicon.ico");
+    });
+  });
 });
