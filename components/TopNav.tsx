@@ -3,13 +3,11 @@ import { NavTabs } from "@/components/NavTabs";
 import { signInWithDiscord, signOutAction } from "@/app/actions";
 
 export function TopNav({
-  teamDivision,
   isSignedIn,
   userName,
   userImage,
   isAdmin = false,
 }: {
-  teamDivision: string;
   isSignedIn: boolean;
   userName?: string | null;
   userImage?: string | null;
@@ -35,13 +33,6 @@ export function TopNav({
       <NavTabs showAdmin={isAdmin} />
 
       <div className="flex items-center gap-4">
-        <div className="hidden items-center gap-1.5 rounded-full border border-border px-3 py-1.5 sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          <span className="font-mono text-caption font-medium tracking-wide text-text-muted">
-            {teamDivision}
-          </span>
-        </div>
-
         {isSignedIn ? (
           <div className="flex items-center gap-3">
             <Avatar name={userName ?? "You"} src={userImage} size={32} />
