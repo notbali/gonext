@@ -1,5 +1,27 @@
-# gonext
-A VALORANT Premier Coordinator App
+# GoNext
+
+A VALORANT Premier coordinator for my own team: see who is available, who is confirmed, and get Discord pings so five players show up on match day.
+
+**Live app:** [gonext.murtazalol.com](https://gonext.murtazalol.com)
+
+
+## What it does
+
+- **Discord login.** Sign in with your Discord account, no passwords.
+- **Invite link teams.** The only way onto a team is its invite link. The first person to join becomes the Coach, who can share the link from the Roster page.
+- **Roster and availability.** Everyone sees the roster and the week's matches, and each player can edit only their own row. Players mark days as Confirmed, Tentative, or Not set.
+- **Roles.** Players and Coaches, plus Admins who manage every signed in user from a hidden `/admin` page.
+- **Automatic Discord pings.** A Discord bot posts match day reminders, a 30 minute warning before a match, and a Sunday reminder for anyone with days not set next week. All times are Eastern.
+
+## Under the hood
+
+- Auth.js with Discord OAuth. Admin access is granted by Discord user id through an environment variable, and the `/admin` page returns a 404 for everyone else.
+- Postgres through Neon's serverless driver adapter, with Prisma migrations and seed data.
+- Integration tests run against a real Dockerized Postgres instead of mocks, including a join race test that only means something against real transaction behavior.
+- A bot API, `GET /api/bot/pings`, protected by a shared secret. The [bali-bot](https://github.com/notbali/bali-bot) Discord bot polls it and posts each ping once, tracked by key.
+- Deployed on Vercel with Neon.
+
+**Stack:** Next.js, TypeScript, Prisma, PostgreSQL (Neon), Auth.js, Vitest, Docker, Vercel
 
 ## Development
 
@@ -26,7 +48,8 @@ npm test             # pushes the schema to it and runs the suite
 npm run test:db:down # tear it down when you're done
 ```
 
-## Discord login setup
+<details>
+<summary><strong>Discord login setup</strong></summary>
 
 Login uses Discord OAuth via Auth.js. `AUTH_SECRET` is already generated for you in
 `.env.local`; you need to supply the two Discord values yourself:
@@ -51,7 +74,10 @@ yourself. The first person to join a team becomes its Coach, who can then find a
 real invite link from the Roster page. Only your own row is ever editable; everyone else's
 stays read-only.
 
-## Admin access
+</details>
+
+<details>
+<summary><strong>Admin access</strong></summary>
 
 Admins manage every signed-in user from `/admin` (hidden from everyone else — it 404s). Admin is
 granted by Discord user id, via an environment variable rather than the database:
@@ -70,7 +96,10 @@ An Admin can add anyone who has signed in with Discord but isn't on the team yet
 players just need to log in once), remove/reactivate anyone including Coaches, promote or
 demote Coaches, and regenerate the invite link.
 
-## Discord pings (bali-bot)
+</details>
+
+<details>
+<summary><strong>Discord pings (bali-bot)</strong></summary>
 
 The site tells the Discord bot ([bali-bot](https://github.com/notbali/bali-bot)) what to post via
 `GET /api/bot/pings`, protected by a shared secret. The bot polls it every few minutes and posts
@@ -90,7 +119,10 @@ Setup:
    value as `GONEXT_BOT_SECRET`.
 3. In Discord, run `/premier set-channel` in the team's server.
 
-## Deployment (Vercel + Neon)
+</details>
+
+<details>
+<summary><strong>Deployment (Vercel + Neon)</strong></summary>
 
 1. **Push to GitHub** — the repo already has a remote (`origin`); commit and push `main`.
 2. **Create the Vercel project** at [vercel.com/new](https://vercel.com/new), importing this
@@ -111,3 +143,5 @@ Setup:
 7. Deploy — pushing to `main` triggers it automatically once the Vercel project is linked.
 
 No custom domain needed for a beta — the default `*.vercel.app` URL is fine.
+
+</details>
