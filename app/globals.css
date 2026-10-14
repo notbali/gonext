@@ -13,6 +13,17 @@
   --raw-accent-bright: #ff7a85;
   --raw-accent-dim: #3d141a;
 
+  /* availability: the colors the grid's statuses mean */
+  --raw-primary: #4cff7e;
+  --raw-primary-bright: #8ff5ac;
+  --raw-primary-dim: #1e4a2e;
+  --raw-warning: #ffb020;
+  --raw-warning-dim: #4a3512;
+  --raw-danger: #ff4d5e;
+  --raw-danger-dim: #3d1418;
+
+  color-scheme: dark;
+
   /* motion: durations */
   --d-micro: 120ms; /* hover, press, focus, icon state */
   --d-ui: 240ms; /* cards, menus, tabs, cell writes */
@@ -48,6 +59,38 @@
   --raw-accent-dim: #3f2210;
 }
 
+/* Light mode (lib/theme.ts): set per browser from the nav's switch. It comes after
+   the Halloween block so its neutrals win; the availability colors darken so they
+   stay readable as text on white, and their -dim fills become pale tints. */
+:root[data-theme="light"] {
+  --raw-bg: #f3f1ed;
+  --raw-surface: #ffffff;
+  --raw-surface-raised: #f0ede8;
+  --raw-border: #d6d1c9;
+  --raw-text-primary: #161b20;
+  --raw-text-muted: #4f5a63;
+  --raw-text-dim: #66717a;
+
+  --raw-accent: #d42a3a;
+  --raw-accent-bright: #a81c2a;
+  --raw-accent-dim: #fbe1e4;
+
+  --raw-primary: #137a37;
+  --raw-primary-bright: #0f652d;
+  --raw-primary-dim: #d9f2e1;
+  --raw-warning: #935800;
+  --raw-warning-dim: #faecd2;
+  --raw-danger: #b8202f;
+  --raw-danger-dim: #fbe0e3;
+
+  color-scheme: light;
+}
+:root[data-theme="light"][data-season="halloween"] {
+  --raw-accent: #c0500c;
+  --raw-accent-bright: #9c400a;
+  --raw-accent-dim: #fde6d3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --d-ui: 120ms;
@@ -71,15 +114,15 @@
   --color-text-muted: var(--raw-text-muted);
   --color-text-dim: var(--raw-text-dim);
 
-  --color-primary: #4cff7e;
-  --color-primary-bright: #8ff5ac;
-  --color-primary-dim: #1e4a2e;
+  --color-primary: var(--raw-primary);
+  --color-primary-bright: var(--raw-primary-bright);
+  --color-primary-dim: var(--raw-primary-dim);
 
-  --color-warning: #ffb020;
-  --color-warning-dim: #4a3512;
+  --color-warning: var(--raw-warning);
+  --color-warning-dim: var(--raw-warning-dim);
 
-  --color-danger: #ff4d5e;
-  --color-danger-dim: #3d1418;
+  --color-danger: var(--raw-danger);
+  --color-danger-dim: var(--raw-danger-dim);
 
   --color-brand: var(--raw-accent);
   --color-brand-bright: var(--raw-accent-bright);
@@ -216,18 +259,18 @@ body {
   }
 }
 
-/* Playoffs: the season's one tournament match gets a more insistent glow than
-   a regular match's urgency-breathe, in the warning/gold accent. */
+/* Playoffs: the season's one tournament match gets a gentle gold glow, drawn
+   inset so it stays inside the card instead of washing over the rows around it. */
 .playoffs-glow {
   animation: gonext-playoffs-glow 2.4s var(--e-inout) infinite;
 }
 @keyframes gonext-playoffs-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 rgba(255, 176, 32, 0);
+    box-shadow: inset 0 0 0 transparent;
   }
   50% {
-    box-shadow: 0 0 16px rgba(255, 176, 32, 0.45);
+    box-shadow: inset 0 0 14px color-mix(in srgb, var(--color-warning) 14%, transparent);
   }
 }
 

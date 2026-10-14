@@ -36,7 +36,7 @@ export function LegendCard({ season = null }: { season?: Season }) {
         data-testid="legend-shortcuts"
         className="mt-3 border-t border-border pt-3 font-mono text-[11px] tracking-wide text-text-dim pointer-coarse:hidden"
       >
-        Your row: <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd> <Kbd>0</Kbd> set · <Kbd>←</Kbd> <Kbd>→</Kbd> move
+        Hover a day in your row: <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd> <Kbd>0</Kbd> set · <Kbd>←</Kbd> <Kbd>→</Kbd> move
       </p>
     </div>
   );

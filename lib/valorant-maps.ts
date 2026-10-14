@@ -24,7 +24,7 @@ const MAP_IMAGE_FILENAMES: Record<ValorantMap, string | null> = {
   SUNSET: "sunset.webp",
   ABYSS: "abyss.webp",
   CORRODE: "corrode.png",
-  SUMMIT: null,
+  SUMMIT: "summit.webp",
 };
 
 /** The maps a coach can assign to a week, in the order they're offered. */

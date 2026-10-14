@@ -2,6 +2,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NavTabs } from "./NavTabs";
+import { LATEST_PATCH_DATE } from "@/lib/patch-notes";
+import { PATCH_NOTES_SEEN_KEY } from "@/lib/patch-notes-seen";
 
 const mockPathname = vi.fn();
 
@@ -94,5 +96,43 @@ describe("NavTabs admin tab", () => {
     render(<NavTabs showAdmin />);
     expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: /schedule/i })).not.toHaveAttribute("aria-current");
+  });
+});
+
+describe("NavTabs What's new tab", () => {
+  beforeEach(() => {
+    mockPathname.mockReturnValue("/");
+    localStorage.clear();
+  });
+
+  it("links to /whats-new", () => {
+    render(<NavTabs />);
+    expect(screen.getByRole("link", { name: /what's new/i })).toHaveAttribute("href", "/whats-new");
+  });
+
+  it("marks What's new active on /whats-new", () => {
+    mockPathname.mockReturnValue("/whats-new");
+    render(<NavTabs />);
+    expect(screen.getByRole("link", { name: /what's new/i })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /schedule/i })).not.toHaveAttribute("aria-current");
+  });
+
+  it("shows a new dot on the tab until the viewer has seen the latest patch notes", () => {
+    render(<NavTabs />);
+    const link = screen.getByRole("link", { name: /what's new/i });
+    expect(link).toContainElement(screen.getByTestId("nav-new-dot"));
+    expect(link).toHaveAccessibleName(/unread/i);
+  });
+
+  it("hides the dot once the latest patch notes have been seen", () => {
+    localStorage.setItem(PATCH_NOTES_SEEN_KEY, LATEST_PATCH_DATE);
+    render(<NavTabs />);
+    expect(screen.queryByTestId("nav-new-dot")).not.toBeInTheDocument();
+  });
+
+  it("hides the dot while the viewer is on the page", () => {
+    mockPathname.mockReturnValue("/whats-new");
+    render(<NavTabs />);
+    expect(screen.queryByTestId("nav-new-dot")).not.toBeInTheDocument();
   });
 });

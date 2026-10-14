@@ -13,6 +13,7 @@ import { getSeason } from "@/lib/season";
 import { getScheduleData } from "@/lib/schedule-data";
 import { getFaviconSignals } from "@/lib/favicon-data";
 import { appViewport } from "@/lib/viewport";
+import { THEME_INIT_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
 const inter = Inter({
@@ -50,7 +51,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       data-season={season ?? undefined}
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
+      // The theme script below sets data-theme before React hydrates.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full font-sans antialiased">
         <SeasonProvider season={season}>
           <BootSequence />

@@ -306,9 +306,79 @@ describe("EditableCell notes", () => {
       expect(mon).toHaveFocus();
     });
 
+    it("takes the number keys while the pointer is over the cell, without having to focus its select first", async () => {
+      renderCell({ status: "not-set" });
+      fireEvent.mouseEnter(screen.getByTestId("editable-cell"));
+      fireEvent.keyDown(document.body, { key: "1" });
+
+      await waitFor(() => expect(mockUpdateAvailability).toHaveBeenCalledWith("t1", "2026-09-14T00:00:00.000Z", "available", null));
+      expect(screen.getByRole("combobox")).toHaveValue("available");
+    });
+
+    it("stops taking keys once the pointer leaves the cell", () => {
+      renderCell({ status: "not-set" });
+      const cell = screen.getByTestId("editable-cell");
+      fireEvent.mouseEnter(cell);
+      fireEvent.mouseLeave(cell);
+      fireEvent.keyDown(document.body, { key: "1" });
+      expect(mockUpdateAvailability).not.toHaveBeenCalled();
+    });
+
+    it("leaves number keys alone while typing in a text field, even over the cell", () => {
+      render(
+        <ToastProvider>
+          <EditableCell teammateId="t1" dateISO="2026-09-14T00:00:00.000Z" status="available" />
+          <input aria-label="elsewhere" />
+        </ToastProvider>,
+      );
+      fireEvent.mouseEnter(screen.getByTestId("editable-cell"));
+      fireEvent.keyDown(screen.getByPlaceholderText("All day"), { key: "2" });
+      fireEvent.keyDown(screen.getByLabelText("elsewhere"), { key: "3" });
+      expect(mockUpdateAvailability).not.toHaveBeenCalled();
+    });
+
+    it("doesn't apply a key twice when the select itself is focused under the pointer", async () => {
+      renderCell({ status: "not-set" });
+      fireEvent.mouseEnter(screen.getByTestId("editable-cell"));
+      fireEvent.keyDown(screen.getByRole("combobox"), { key: "1" });
+      await waitFor(() => expect(mockUpdateAvailability).toHaveBeenCalledTimes(1));
+    });
+
+    it("focuses the select when the cell's background is clicked, so the arrows work from there", () => {
+      renderCell({ status: "not-set" });
+      fireEvent.mouseDown(screen.getByTestId("editable-cell"));
+      expect(screen.getByRole("combobox")).toHaveFocus();
+    });
+
     it("tells a mouse user the shortcuts", () => {
       renderCell({ status: "not-set" });
       expect(screen.getByRole("combobox")).toHaveAttribute("title", expect.stringMatching(/1.*2.*3.*0/));
     });
+  });
+});
+
+describe("EditableCell select", () => {
+  it("draws its own dropdown arrow instead of the browser's", () => {
+    renderCell({ status: "available" });
+    expect(screen.getByRole("combobox")).toHaveClass("appearance-none");
+    expect(screen.getByTestId("cell-chevron")).toBeInTheDocument();
+  });
+
+  it("shows Not set as a blank select with the arrow centered", () => {
+    renderCell({ status: "not-set" });
+    expect(screen.getByRole("combobox")).toHaveClass("text-transparent");
+    expect(screen.getByTestId("cell-chevron")).toHaveClass("left-1/2", "-translate-x-1/2");
+  });
+
+  it("keeps the arrow at the right edge once a status is set", () => {
+    renderCell({ status: "tentative" });
+    expect(screen.getByRole("combobox")).not.toHaveClass("text-transparent");
+    expect(screen.getByTestId("cell-chevron")).not.toHaveClass("left-1/2");
+  });
+
+  it("still names Not set for screen readers and in the open list", () => {
+    renderCell({ status: "not-set" });
+    expect(screen.getByRole("option", { name: "Not set" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Not set" })).toHaveClass("text-text-primary");
   });
 });

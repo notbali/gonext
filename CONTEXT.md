@@ -65,3 +65,7 @@ _Avoid_: RSVP'd, accepted
 
 **This week**:
 The real calendar week (Monday–Sunday) containing today's date. The schedule grid defaults to this week but a Teammate can navigate to past/future weeks; "This week" always jumps back to it.
+
+**Patch notes**:
+The dated list of what changed on GO//NEXT, written for Teammates rather than developers and shown on `/whats-new` (the "What's new" tab), newest first. Kept in `lib/patch-notes.ts` rather than the database; the tab shows a dot until a browser has opened the page since the newest entry.
+_Avoid_: Changelog, release notes
