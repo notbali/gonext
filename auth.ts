@@ -6,7 +6,10 @@ import { isAdminUser, parseAdminDiscordIds } from "@/lib/admin";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
-  providers: [Discord],
+  // Discord now appends `iss=https://discord.com` to its OAuth redirect (RFC 9207). Auth.js
+  // checks that against the provider's issuer, which defaults to https://authjs.dev for
+  // plain-OAuth providers, so every callback failed with error=Configuration.
+  providers: [Discord({ issuer: "https://discord.com" })],
   session: { strategy: "database" },
   callbacks: {
     async session({ session, user }) {
