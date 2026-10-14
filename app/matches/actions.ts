@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { easternPartsToUtc, getWeekStart } from "@/lib/dates";
+import { stageWeekFor } from "@/lib/premier-stages";
 import type { MatchResult, ValorantMap } from "@/lib/generated/prisma/client";
 
 const MAX_MATCHES_PER_WEEK = 2;
@@ -84,10 +85,16 @@ export async function deleteMatch(matchId: string) {
   revalidatePath("/");
 }
 
-/** Sets (or replaces) the Map Riot assigned to the week starting `weekStartISO`. */
+/** Sets (or replaces) the Map Riot assigned to the week starting `weekStartISO`, for a week
+ * no Premier Stage covers — a Stage's weeks come from lib/premier-stages.ts. */
 export async function setWeekMap(weekStartISO: string, map: ValorantMap) {
   await requireCoach();
   const weekStart = new Date(weekStartISO);
+
+  const stageWeek = stageWeekFor(weekStart);
+  if (stageWeek) {
+    throw new Error(`Week ${stageWeek.number} of ${stageWeek.stage} is already ${stageWeek.map}.`);
+  }
 
   const team = await db.team.findFirst();
   if (!team) throw new Error("No team found.");

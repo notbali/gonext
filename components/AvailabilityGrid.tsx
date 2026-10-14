@@ -165,7 +165,8 @@ function WeekSection({
               </>
             ) : (
               <div className="flex h-full items-center justify-center">
-                <MapLabel text="MAP TBD" className={MAP_LABEL_CLASS} />
+                {/* A known map whose artwork hasn't been added yet still shows its name. */}
+                <MapLabel text={map ?? "MAP TBD"} className={MAP_LABEL_CLASS} />
               </div>
             )}
           </div>

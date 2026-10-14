@@ -8,9 +8,10 @@ import type { ValorantMap } from "@/lib/generated/prisma/client";
  *   1. Add it to the `ValorantMap` enum in prisma/schema.prisma and create a migration.
  *   2. Drop its artwork into /public/maps (any extension — source art came in whatever format Riot/the wiki served).
  *   3. Add one line here. It's typed against the Prisma enum, so `tsc` flags it if step 1 was done and this wasn't.
+ *      `null` means the artwork hasn't been added yet: the map is still assignable, just with no hover preview.
  * The dropdown, hover preview, and decrypting label all pick it up from here.
  */
-const MAP_IMAGE_FILENAMES: Record<ValorantMap, string> = {
+const MAP_IMAGE_FILENAMES: Record<ValorantMap, string | null> = {
   ASCENT: "ascent.webp",
   BIND: "bind.webp",
   BREEZE: "breeze.png",
@@ -23,14 +24,15 @@ const MAP_IMAGE_FILENAMES: Record<ValorantMap, string> = {
   SUNSET: "sunset.webp",
   ABYSS: "abyss.webp",
   CORRODE: "corrode.png",
+  SUMMIT: null,
 };
 
 /** The maps a coach can assign to a week, in the order they're offered. */
 export const VALORANT_MAPS = Object.keys(MAP_IMAGE_FILENAMES) as ValorantMap[];
 
 /** The static artwork for `map`, shown when hovering its week in the schedule calendar. Null for
- * anything that isn't a known map (there's no artwork to fall back to). */
+ * anything that isn't a known map, or a map whose artwork hasn't been added yet. */
 export function mapImageSrc(map: string): string | null {
-  const filename = (MAP_IMAGE_FILENAMES as Record<string, string>)[map];
+  const filename = (MAP_IMAGE_FILENAMES as Record<string, string | null>)[map];
   return filename ? `/maps/${filename}` : null;
 }

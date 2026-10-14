@@ -105,9 +105,10 @@ model Match {
 
 // Riot assigns Premier teams one map per calendar week (Monday-Sunday, team-local);
 // up to two Matches can be played on it that week. A Match's map is always resolved
-// by looking up the WeekMap for the week its date falls in — never stored on the
-// Match itself — the same way "confirmed" is derived from Availability rather than
-// stored.
+// by the week its date falls in — never stored on the Match itself — the same way
+// "confirmed" is derived from Availability rather than stored. Weeks inside a Premier
+// Stage take their map from lib/premier-stages.ts; a WeekMap only covers weeks no
+// Stage does.
 model WeekMap {
   id        String      @id @default(cuid())
   // Monday 00:00 of the week, team-local — matches lib/dates.ts's getWeekStart.
@@ -138,6 +139,7 @@ enum ValorantMap {
   SUNSET
   ABYSS
   CORRODE
+  SUMMIT
 }
 
 model Availability {

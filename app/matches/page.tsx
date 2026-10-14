@@ -13,11 +13,12 @@ import { suggestMatchTimes } from "@/lib/best-times";
 import { getScheduleData, WEEKS_AHEAD } from "@/lib/schedule-data";
 import { summarizeRecord, type MatchResultValue } from "@/lib/match-record";
 import { WeekMapEditor } from "@/components/WeekMapEditor";
-import { chunkIntoWeeks, getEasternParts, getLookaheadDates, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
+import { getEasternParts, matchDateLine, nowInTeamTimezone } from "@/lib/dates";
 import { getSeason, isHalloweenNight, type Season } from "@/lib/season";
 import { HalloweenBadge } from "@/components/MatchesCard";
 import { LocalMatchTime } from "@/components/LocalMatchTime";
-import { mapForWeek } from "@/lib/week-schedule";
+import { mapForWeek, weeksToAssign } from "@/lib/week-schedule";
+import { upcomingPlayoffs } from "@/lib/premier-stages";
 import { createMatch, setWeekMap } from "@/app/matches/actions";
 
 type MatchRow = {
@@ -129,10 +130,7 @@ export default async function MatchesPage() {
   const schedule = isCoach ? await getScheduleData(today, now, db, 2) : null;
   const suggestions = schedule ? suggestMatchTimes(schedule.teammates, schedule.weekDates, today) : [];
 
-  const weeks = chunkIntoWeeks(getLookaheadDates(nowInTeamTimezone(), WEEKS_AHEAD)).map((weekDates) => ({
-    weekDates,
-    map: mapForWeek(weekMaps, weekDates[0]),
-  }));
+  const weeks = weeksToAssign(today, weekMaps, WEEKS_AHEAD);
 
   return (
     <PageContainer>
@@ -156,7 +154,7 @@ export default async function MatchesPage() {
 
       {isCoach && <BestTimesCard suggestions={suggestions} />}
       {isCoach && <CreateMatchForm action={createMatch} />}
-      {isCoach && <WeekMapEditor weeks={weeks} action={setWeekMap} />}
+      {isCoach && <WeekMapEditor weeks={weeks} playoffs={upcomingPlayoffs(today)} action={setWeekMap} />}
     </PageContainer>
   );
 }
