@@ -55,4 +55,29 @@ describe("WeekMapEditor", () => {
 
     await waitFor(() => expect(screen.getByText("Only a coach can manage matches.")).toBeInTheDocument());
   });
+
+  it("shows a stage week's number and map as read-only, since Riot already set it", () => {
+    render(
+      <ToastProvider>
+        <WeekMapEditor
+          weeks={[{ weekDates, map: "SUNSET", stageWeek: { stage: "V26A6", number: 3 } }]}
+          action={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.getByText("Week 3 · V26A6")).toBeInTheDocument();
+    expect(screen.getByText("SUNSET")).toBeInTheDocument();
+  });
+
+  it("names the stage's Playoffs day", () => {
+    render(
+      <ToastProvider>
+        <WeekMapEditor weeks={[]} playoffs={{ stage: "V26A6", date: new Date(2026, 11, 6) }} action={vi.fn()} />
+      </ToastProvider>,
+    );
+
+    expect(screen.getByText("V26A6 Playoffs · SUN DEC 6")).toBeInTheDocument();
+  });
 });

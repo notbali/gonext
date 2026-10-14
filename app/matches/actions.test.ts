@@ -264,6 +264,16 @@ describe("setWeekMap", () => {
     expect(weekMaps).toHaveLength(1);
     expect(weekMaps[0].map).toBe("BIND");
   });
+
+  it("refuses a week Riot's stage schedule already assigns", async () => {
+    auth.mockResolvedValue({ isCoach: true });
+    await makeTeam();
+
+    await expect(setWeekMap("2026-11-02", "ASCENT")).rejects.toThrow(
+      "Week 3 of V26A6 is already SUNSET.",
+    );
+    expect(await testDb.weekMap.findMany()).toHaveLength(0);
+  });
 });
 
 describe("setMatchResult", () => {

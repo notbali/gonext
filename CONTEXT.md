@@ -48,7 +48,11 @@ A Discord message the team's bot posts from GO//NEXT: the match-day roll call, t
 _Avoid_: Notification, alert
 
 **Week**:
-The Monday–Sunday scheduling unit Riot assigns a single Map to; a Coach sets that Map, and up to two Matches can be played on it that week.
+The Monday–Sunday scheduling unit Riot assigns a single Map to, and up to two Matches can be played on it that week. Inside a Stage the Map comes from Riot's schedule; a Coach only sets it for a Week no Stage covers.
+
+**Stage**:
+One Premier season as Riot announces it (e.g. `V26A6`): numbered Weeks ("Week 3"), each with its Map and queue days, ending in Playoffs. Days and Maps are the same in every zone, so Stages are kept in `lib/premier-stages.ts` rather than entered per team; only queue times differ by zone, and those live on each Match.
+_Avoid_: Season (taken by the cosmetic seasonal skin), Act
 _Avoid_: Round, cycle
 
 **Playoffs**:
