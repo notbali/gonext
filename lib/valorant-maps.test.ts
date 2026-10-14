@@ -18,8 +18,8 @@ describe("mapImageSrc", () => {
     expect(new Set(srcs).size).toBe(MAPS_WITH_ARTWORK.length);
   });
 
-  it("returns null for a map whose artwork hasn't been added yet", () => {
-    expect(mapImageSrc("SUMMIT")).toBeNull();
+  it("shows Summit's artwork", () => {
+    expect(mapImageSrc("SUMMIT")).toBe("/maps/summit.webp");
   });
 
   it("returns null for a value that isn't a known map", () => {

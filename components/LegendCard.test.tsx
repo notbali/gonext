@@ -23,4 +23,9 @@ describe("LegendCard", () => {
     expect(hint).toHaveTextContent(/1.*2.*3.*0/);
     expect(hint.className).toContain("pointer-coarse:hidden");
   });
+
+  it("says the keys work on whichever of your days the pointer is over", () => {
+    render(<LegendCard />);
+    expect(screen.getByTestId("legend-shortcuts")).toHaveTextContent(/hover a day in your row/i);
+  });
 });

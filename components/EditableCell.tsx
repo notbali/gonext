@@ -114,6 +114,29 @@ export function EditableCell({
     if (noteOpen && !savedNote) noteInputRef.current?.focus();
   }, [noteOpen, savedNote]);
 
+  // While the pointer is over the cell, the number keys set it without focusing the
+  // select first: a native select swallows keys while its menu is open, and Safari
+  // doesn't focus one on click at all. Keys the select or a text field gets are theirs.
+  const [hovered, setHovered] = useState(false);
+  const selectRef = useRef<HTMLSelectElement>(null);
+  const setStatusRef = useRef(setStatus);
+  useEffect(() => {
+    setStatusRef.current = setStatus;
+  });
+  useEffect(() => {
+    if (!hovered) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable]")) return;
+      const shortcut = STATUS_SHORTCUTS[e.key];
+      if (!shortcut) return;
+      e.preventDefault();
+      setStatusRef.current(shortcut);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [hovered]);
+
   useEffect(() => {
     if (lockState === "idle") return;
     const t = setTimeout(() => setLockState("idle"), LOCK_STATE_DURATION_MS[lockState]);
@@ -176,6 +199,7 @@ export function EditableCell({
   }
 
   function setStatus(next: AvailabilityStatus) {
+    if (next === localStatus) return;
     setLocalStatus(next);
     save(next, localRange);
   }
@@ -218,37 +242,71 @@ export function EditableCell({
     if (normalized !== savedRange) save(localStatus, normalized);
   }
 
+  const isNotSet = localStatus === "not-set";
+
   return (
     <div
+      data-testid="editable-cell"
       data-lock={lockState === "idle" ? undefined : lockState}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onMouseDown={(e) => {
+        // A click on the cell's own background (not a control) focuses its select, so the arrows work next.
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          selectRef.current?.focus();
+        }
+      }}
       className={`slot flex h-full w-full flex-col items-center justify-center gap-1 rounded-md border p-1.5 ${CELL_STYLES[localStatus]}`}
     >
-      <select
-        value={localStatus}
-        // Not `disabled` while saving: that would drop focus and break typing a week through with the keyboard.
-        aria-busy={isPending}
-        data-cell-select
-        title={SHORTCUT_HINT}
-        onChange={(e) => setStatus(e.target.value as AvailabilityStatus)}
-        onKeyDown={(e) => {
-          if (e.metaKey || e.ctrlKey || e.altKey) return;
-          const shortcut = STATUS_SHORTCUTS[e.key];
-          if (shortcut) {
-            e.preventDefault();
-            if (shortcut !== localStatus) setStatus(shortcut);
-          } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            e.preventDefault();
-            focusNeighbor(e.currentTarget, e.key === "ArrowRight" ? 1 : -1);
-          }
-        }}
-        className="w-full rounded border border-border bg-surface-raised px-1 py-1 text-center font-mono text-[10px] font-semibold uppercase tracking-wide text-text-primary aria-busy:opacity-60"
-      >
-        {AVAILABILITY_STATUS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {statusLabel(o.value)}
-          </option>
-        ))}
-      </select>
+      <div className="relative w-full">
+        <select
+          ref={selectRef}
+          value={localStatus}
+          // Not `disabled` while saving: that would drop focus and break typing a week through with the keyboard.
+          aria-busy={isPending}
+          data-cell-select
+          title={SHORTCUT_HINT}
+          onChange={(e) => setStatus(e.target.value as AvailabilityStatus)}
+          onKeyDown={(e) => {
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+            const shortcut = STATUS_SHORTCUTS[e.key];
+            if (shortcut) {
+              e.preventDefault();
+              setStatus(shortcut);
+            } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+              e.preventDefault();
+              focusNeighbor(e.currentTarget, e.key === "ArrowRight" ? 1 : -1);
+            }
+          }}
+          // Not set reads as a blank box with just the arrow in the middle; the option keeps its name for screen readers.
+          className={`w-full cursor-pointer appearance-none rounded border border-border bg-surface-raised py-1 pl-1 text-center font-mono text-[10px] font-semibold uppercase tracking-wide aria-busy:opacity-60 ${
+            isNotSet ? "pr-1 text-transparent" : "pr-4 text-text-primary"
+          }`}
+        >
+          {AVAILABILITY_STATUS_OPTIONS.map((o) => (
+            // Options set their own colors: they'd otherwise inherit the blank select's transparent text.
+            <option key={o.value} value={o.value} className="bg-surface-raised text-text-primary">
+              {statusLabel(o.value)}
+            </option>
+          ))}
+        </select>
+        <svg
+          data-testid="cell-chevron"
+          aria-hidden="true"
+          viewBox="0 0 10 6"
+          className={`pointer-events-none absolute top-1/2 h-1.5 w-2.5 -translate-y-1/2 text-text-dim ${
+            isNotSet ? "left-1/2 -translate-x-1/2" : "right-1.5"
+          }`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M1 1l4 4 4-4" />
+        </svg>
+      </div>
       {localStatus === "available" && (
         <input
           value={localRange}

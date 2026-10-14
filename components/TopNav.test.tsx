@@ -36,12 +36,30 @@ describe("TopNav on narrow screens", () => {
     expect(header).not.toHaveClass("px-8");
   });
 
-  it("drops the 'Premier Scheduler' tagline below lg so the brand row fits", () => {
+  it("has no 'Premier Scheduler' tagline", () => {
     renderNav();
 
-    const tagline = screen.getByText("Premier Scheduler");
-    expect(tagline).toHaveClass("hidden");
-    expect(tagline).toHaveClass("lg:inline");
+    expect(screen.queryByText(/premier scheduler/i)).toBeNull();
+  });
+
+  it("centers the tabs in the bar from md up, with the brand and account controls in equal side columns", () => {
+    renderNav();
+
+    const header = screen.getByRole("banner");
+    expect(header).toHaveClass("md:grid", "md:grid-cols-[1fr_auto_1fr]");
+    expect(screen.getByRole("navigation")).toHaveClass("md:justify-self-center");
+    expect(screen.getByRole("button", { name: /log out/i }).closest("[data-testid='nav-account']")).toHaveClass(
+      "md:justify-self-end",
+    );
+  });
+
+  it("offers a light/dark mode switch whether or not the viewer is signed in", () => {
+    const { unmount } = renderNav({ isSignedIn: false });
+    expect(screen.getByRole("button", { name: /switch to (light|dark) mode/i })).toBeInTheDocument();
+    unmount();
+
+    renderNav({ isSignedIn: true });
+    expect(screen.getByRole("button", { name: /switch to (light|dark) mode/i })).toBeInTheDocument();
   });
 
   it("has no team division pill", () => {

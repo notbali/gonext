@@ -115,3 +115,53 @@ describe("halloween season", () => {
     expect(reduced).toContain(".ambient-fog");
   });
 });
+
+describe("light mode", () => {
+  it("re-tints every palette token, availability colors included, when the root carries data-theme=light", () => {
+    const body = ruleBody(':root[data-theme="light"]');
+    for (const token of [
+      "--raw-bg",
+      "--raw-surface",
+      "--raw-surface-raised",
+      "--raw-border",
+      "--raw-text-primary",
+      "--raw-text-muted",
+      "--raw-text-dim",
+      "--raw-accent",
+      "--raw-primary",
+      "--raw-primary-dim",
+      "--raw-warning",
+      "--raw-warning-dim",
+      "--raw-danger",
+      "--raw-danger-dim",
+    ]) {
+      expect(body).toContain(`${token}:`);
+    }
+    expect(body).toMatch(/color-scheme:\s*light/);
+  });
+
+  it("reads the availability colors from raw tokens, so a theme can swap them", () => {
+    expect(css).toMatch(/--color-primary:\s*var\(--raw-primary\)/);
+    expect(css).toMatch(/--color-warning:\s*var\(--raw-warning\)/);
+    expect(css).toMatch(/--color-danger:\s*var\(--raw-danger\)/);
+  });
+
+  it("keeps a darker Halloween accent in light mode so it stays readable on white", () => {
+    expect(ruleBody(':root[data-theme="light"][data-season="halloween"]')).toContain("--raw-accent:");
+  });
+
+  it("tells the browser the default theme is dark, so native controls match", () => {
+    expect(ruleBody(":root")).toMatch(/color-scheme:\s*dark/);
+  });
+});
+
+describe("playoffs glow", () => {
+  it("glows inside the card only, so it never bleeds over the rows around it", () => {
+    const start = css.indexOf("@keyframes gonext-playoffs-glow");
+    const keyframes = css.slice(start, css.indexOf("\n}\n", start));
+    const shadows = keyframes.match(/box-shadow:[^;]*/g) ?? [];
+    expect(shadows.length).toBeGreaterThan(0);
+    for (const shadow of shadows) expect(shadow).toContain("inset");
+  });
+});
+
