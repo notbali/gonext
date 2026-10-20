@@ -1,0 +1,13 @@
+-- Supabase exposes the public schema through its Data API. Enabling RLS with no
+-- policies shuts that door; Prisma connects as the table owner, so it is unaffected.
+ALTER TABLE "_prisma_migrations" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Account" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Session" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "VerificationToken" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Team" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Teammate" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Match" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Availability" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WeekMap" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WeeklyDefault" ENABLE ROW LEVEL SECURITY;

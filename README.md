@@ -16,16 +16,16 @@ A VALORANT Premier coordinator for my own team: see who is available, who is con
 ## Under the hood
 
 - Auth.js with Discord OAuth. Admin access is granted by Discord user id through an environment variable, and the `/admin` page returns a 404 for everyone else.
-- Postgres through Neon's serverless driver adapter, with Prisma migrations and seed data.
+- Postgres through Prisma's node-postgres driver adapter, with Prisma migrations and seed data.
 - Integration tests run against a real Dockerized Postgres instead of mocks, including a join race test that only means something against real transaction behavior.
 - A bot API, `GET /api/bot/pings`, protected by a shared secret. The [bali-bot](https://github.com/notbali/bali-bot) Discord bot polls it and posts each ping once, tracked by key.
-- Deployed on Vercel with Neon.
+- Deployed on Vercel with Supabase Postgres.
 
-**Stack:** Next.js, TypeScript, Prisma, PostgreSQL (Neon), Auth.js, Vitest, Docker, Vercel
+**Stack:** Next.js, TypeScript, Prisma, PostgreSQL (Supabase), Auth.js, Vitest, Docker, Vercel
 
 ## Development
 
-Database is Postgres (via Neon's serverless driver adapter) — see **Deployment** below to
+Database is Postgres (via Prisma's node-postgres driver adapter) — see **Deployment** below to
 provision one. Once you have `DATABASE_URL` / `DATABASE_URL_UNPOOLED` in `.env`:
 
 ```bash
@@ -122,15 +122,16 @@ Setup:
 </details>
 
 <details>
-<summary><strong>Deployment (Vercel + Neon)</strong></summary>
+<summary><strong>Deployment (Vercel + Supabase)</strong></summary>
 
 1. **Push to GitHub** — the repo already has a remote (`origin`); commit and push `main`.
 2. **Create the Vercel project** at [vercel.com/new](https://vercel.com/new), importing this
    GitHub repo. Framework preset (Next.js) is auto-detected.
-3. **Add a Postgres database**: in the Vercel project, go to the **Storage** tab → **Marketplace**
-   → install the **Neon** integration (Vercel-managed billing is simplest — no separate Neon
-   signup). This auto-injects `DATABASE_URL` and `DATABASE_URL_UNPOOLED` into the project's
-   environment variables.
+3. **Add a Postgres database**: create a free project at [supabase.com](https://supabase.com),
+   then open **Connect** and copy two connection strings into the Vercel project's environment
+   variables:
+   - `DATABASE_URL` — the **Transaction pooler** string (port `6543`), used by the app
+   - `DATABASE_URL_UNPOOLED` — the **Session pooler** string (port `5432`), used by migrations
 4. **Set the remaining environment variables** in the Vercel project settings (Production
    environment):
    - `AUTH_SECRET` — generate a fresh one (`openssl rand -base64 33`), don't reuse the dev value
@@ -138,7 +139,7 @@ Setup:
    - `AUTH_URL` is **not** needed — Auth.js auto-detects the host on Vercel
 5. **Add the production redirect URI** in the Discord Developer Portal (OAuth2 → Redirects):
    `https://<your-vercel-domain>/api/auth/callback/discord`
-6. **Run the migration against the new database** (locally, pointed at the Neon URLs, or via
+6. **Run the migration against the new database** (locally, pointed at the Supabase URLs, or via
    `vercel env pull` first): `npx prisma migrate deploy && npx prisma db seed`
 7. Deploy — pushing to `main` triggers it automatically once the Vercel project is linked.
 

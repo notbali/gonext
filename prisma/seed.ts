@@ -1,9 +1,9 @@
 import "dotenv/config";
-import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../lib/generated/prisma/client";
+import { createDbAdapter } from "../lib/db-adapter";
 import { getWeekDates } from "../lib/dates";
 
-const adapter = new PrismaNeon({ connectionString: `${process.env.DATABASE_URL}` });
+const adapter = createDbAdapter(`${process.env.DATABASE_URL}`);
 const db = new PrismaClient({ adapter });
 
 const TEAM_ID = "team-1";
